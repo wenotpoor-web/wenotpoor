@@ -127,3 +127,17 @@ h1 {
   background: #ff3b3b;
   color: #000;
 }
+.input.center {
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.btn.block {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.panel {
+  text-align: center;
+}
