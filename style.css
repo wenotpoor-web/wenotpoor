@@ -150,3 +150,22 @@ h1 {
 .panel {
   text-align: center;
 }
+.hint {
+  text-align: left;
+  color: #666;
+  font-size: 0.85rem;
+  margin: -4px 0 12px 0;
+}
+
+.input.file {
+  padding: 10px 12px;
+  background: #0b0b0b;
+  border: 1px solid #222;
+  color: #9a9a9a;
+  font-weight: 600;
+}
+
+.panel {
+  border: 1px solid #1a1a1a;
+}
+
