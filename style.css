@@ -83,14 +83,22 @@ h1 {
   margin: 0 0 8px 0;
 }
 
-.input, .textarea {
+.input,
+.textarea {
   width: 100%;
   padding: 14px 12px;
   margin: 0 0 18px 0;
-  background: #0b0b0b;
-  border: 1px solid #222;
-  color: #fff;
+  background: #ffffff;
+  border: 2px solid #FFD400;
+  color: #000;
   outline: none;
+  font-weight: 700;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #666;
+  letter-spacing: 1.5px;
 }
 
 .textarea {
