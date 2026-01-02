@@ -291,10 +291,16 @@
               <button class="btn secondary" type="button" id="checkpointBrowse">Browse</button>
             </div>
 
-            <label>
-              Answer the question (required)
-              <textarea id="answer" name="answer" placeholder="Type your answer here..." required></textarea>
-            </label>
+           <label class="label" for="answer">ONE QUESTION</label>
+<p class="hint">500 characters. No stories. No excuses.</p>
+<textarea
+  id="answer"
+  name="answer"
+  class="textarea"
+  maxlength="500"
+  placeholder="What lie have you been telling yourself that this book exposed?"
+  required
+></textarea>
 
             <div class="bar" aria-label="Upload progress">
               <div id="progress"></div>
