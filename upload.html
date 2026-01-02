@@ -2,57 +2,561 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Checkpoint Upload</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>We Not Poor — Upload</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --line: rgba(255,255,255,.14);
+      --ok: #3ddc97;
+      --bad: #ff5a6a;
+      --accent: #7c5cff;
+      --accent2:#00d4ff;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f7fb;
+        --card: rgba(0,0,0,.05);
+        --card2: rgba(0,0,0,.07);
+        --text: rgba(0,0,0,.88);
+        --muted: rgba(0,0,0,.60);
+        --line: rgba(0,0,0,.12);
+        --shadow: 0 20px 60px rgba(0,0,0,.12);
+      }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(0,212,255,.25), transparent 55%),
+        radial-gradient(700px 500px at 50% 120%, rgba(61,220,151,.18), transparent 55%),
+        var(--bg);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px 14px;
+    }
+    .wrap{width:min(920px, 100%);}
+    .top{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:14px;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .title{
+      font-size:clamp(22px, 3vw, 32px);
+      letter-spacing:.2px;
+      line-height:1.1;
+      margin:0;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      max-width:60ch;
+    }
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      background: var(--card);
+      padding:8px 10px;
+      border-radius:999px;
+      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:var(--muted);
+      display:inline-block;
+    }
+    .dot.ok{background:var(--ok)}
+    .dot.bad{background:var(--bad)}
+    .card{
+      background: linear-gradient(180deg, var(--card2), var(--card));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+    }
+    @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+    .pane{
+      padding:18px;
+    }
+    .pane + .pane{
+      border-left:1px solid var(--line);
+    }
+    @media (max-width:860px){
+      .pane + .pane{border-left:none;border-top:1px solid var(--line);}
+    }
+    .sectionTitle{
+      margin:0 0 12px 0;
+      font-size:14px;
+      color:var(--muted);
+      letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+    form{display:grid; gap:12px;}
+    label{display:grid; gap:7px; font-size:13px; color:var(--muted);}
+    input[type="email"], input[type="text"]{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+      outline:none;
+    }
+    input::placeholder{color:rgba(255,255,255,.35)}
+    @media (prefers-color-scheme: light){
+      input::placeholder{color:rgba(0,0,0,.35)}
+      input[type="email"], input[type="text"]{background: rgba(255,255,255,.75);}
+    }
+    .drop{
+      border:1px dashed rgba(255,255,255,.25);
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      padding:14px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      cursor:pointer;
+      transition: transform .08s ease, background .2s ease;
+    }
+    .drop:hover{transform: translateY(-1px); background: rgba(255,255,255,.05);}
+    @media (prefers-color-scheme: light){
+      .drop{border-color: rgba(0,0,0,.18); background: rgba(0,0,0,.03);}
+      .drop:hover{background: rgba(0,0,0,.045);}
+    }
+    .filemeta{display:flex; flex-direction:column; gap:4px;}
+    .filemeta b{font-size:14px;}
+    .filemeta span{font-size:12px; color:var(--muted)}
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.22);
+      background: linear-gradient(135deg, rgba(124,92,255,.95), rgba(0,212,255,.75));
+      color:white;
+      padding:12px 14px;
+      border-radius:12px;
+      font-weight:700;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .08s ease, filter .2s ease, opacity .2s ease;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); filter: brightness(1.03);}
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none;}
+    .btn.secondary{
+      background: transparent;
+      border:1px solid var(--line);
+      color: var(--text);
+      font-weight:600;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .row > *{flex:1;}
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+      margin:0;
+    }
+    .bar{
+      height:10px;
+      width:100%;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(61,220,151,.85), rgba(0,212,255,.85));
+      transition: width .2s ease;
+    }
+    .out{
+      display:grid;
+      gap:10px;
+    }
+    .box{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:12px;
+    }
+    .kv{
+      font-family: var(--mono);
+      font-size:12px;
+      color: var(--text);
+      word-break: break-all;
+      margin:8px 0 0 0;
+    }
+    a{color:inherit}
+    .status{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      color: var(--muted);
+    }
+    .preview{
+      border-radius:14px;
+      border:1px solid var(--line);
+      overflow:hidden;
+      background: rgba(255,255,255,.03);
+      display:none;
+    }
+    .preview img{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+    .footer{
+      margin-top:12px;
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    code{font-family:var(--mono); font-size:12px}
+  </style>
 </head>
 <body>
-  <h1>Upload Checkpoint Proof</h1>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1 class="title">We Not Poor — Upload</h1>
+        <p class="subtitle">Upload your checkpoint image. This sends the file to the API, stores it in R2, and returns a key you can attach to a submission.</p>
+      </div>
+      <div class="pill" id="apiPill">
+        <span class="dot" id="apiDot"></span>
+        <span id="apiText">Checking API…</span>
+      </div>
+    </div>
 
-  <form id="uploadForm">
-    <label>
-      Email
-      <input type="email" name="email" required />
-    </label>
-    <br /><br />
+    <div class="card">
+      <div class="grid">
+        <!-- Left: Form -->
+        <div class="pane">
+          <p class="sectionTitle">Upload</p>
 
-    <label>
-      Checkpoint ID
-      <input type="text" name="checkpoint_id" value="cp-0" required />
-    </label>
-    <br /><br />
+          <form id="form">
+            <div class="row">
+              <label>
+                Email
+                <input id="email" name="email" type="email" placeholder="you@example.com" required />
+              </label>
 
-    <label>
-      Image
-      <input type="file" name="file" accept="image/*" required />
-    </label>
-    <br /><br />
+              <label>
+                Checkpoint ID
+                <input id="checkpoint" name="checkpoint_id" type="text" placeholder="cp-0" required />
+              </label>
+            </div>
 
-    <button type="submit">Upload</button>
-  </form>
+            <input id="file" name="file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
 
-  <pre id="result"></pre>
+            <div class="drop" id="drop">
+              <div class="filemeta">
+                <b id="fileName">Choose a file</b>
+                <span id="fileInfo">PNG/JPG/WEBP • Max 10MB</span>
+              </div>
+              <button class="btn secondary" type="button" id="chooseBtn">Browse</button>
+            </div>
 
-  <script>
-    const form = document.getElementById("uploadForm");
-    const result = document.getElementById("result");
+            <div class="bar" aria-label="Upload progress">
+              <div id="progress"></div>
+            </div>
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+            <button class="btn" id="submitBtn" type="submit">
+              Upload
+              <span style="opacity:.85; font-weight:800;">→</span>
+            </button>
 
-      const fd = new FormData(form);
+            <p class="hint">
+              Endpoint: <code id="endpoint"></code><br/>
+              Tip: This is a direct multipart upload to the Worker (no presigned URL).
+            </p>
+          </form>
+        </div>
 
-      const res = await fetch(
-        "https://wenotpoor-api.wenotpoor.workers.dev/api/uploads",
-        {
-          method: "POST",
-          body: fd,
-          credentials: "include"
+        <!-- Right: Output -->
+        <div class="pane">
+          <p class="sectionTitle">Result</p>
+
+          <div class="out">
+            <div class="box">
+              <div class="status" id="statusLine">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Waiting for upload…</span>
+              </div>
+              <div class="kv" id="resultText">—</div>
+            </div>
+
+            <div class="box" id="linksBox" style="display:none;">
+              <div class="status">
+                <span class="dot ok"></span>
+                <span>Links</span>
+              </div>
+              <div class="kv" id="linksText"></div>
+            </div>
+
+            <div class="preview" id="preview">
+              <img id="previewImg" alt="Uploaded preview" />
+            </div>
+
+            <div class="row">
+              <button class="btn secondary" type="button" id="copyKeyBtn" disabled>Copy key</button>
+              <button class="btn secondary" type="button" id="resetBtn">Reset</button>
+            </div>
+
+            <p class="hint">
+              If you want to attach the image to a submission, send the returned <code>key</code> inside
+              <code>image_keys</code> when calling <code>/api/checkpoints/submit</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Allowed origins are controlled by the Worker CORS allowlist.</div>
+      <div>© We Not Poor</div>
+    </div>
+  </div>
+
+<script>
+  // ✅ Set your API base here.
+  // If you later map a custom domain for the API, only change this.
+  const API_BASE = "https://wenotpoor-api.wenotpoor.workers.dev";
+  const UPLOAD_ENDPOINT = API_BASE + "/api/uploads";
+  const VIEW_ENDPOINT = API_BASE + "/api/uploads/view?key=";
+
+  document.getElementById("endpoint").textContent = UPLOAD_ENDPOINT;
+
+  const el = (id) => document.getElementById(id);
+  const form = el("form");
+  const fileInput = el("file");
+  const drop = el("drop");
+  const chooseBtn = el("chooseBtn");
+  const submitBtn = el("submitBtn");
+  const progress = el("progress");
+
+  const fileName = el("fileName");
+  const fileInfo = el("fileInfo");
+
+  const statusDot = el("statusDot");
+  const statusText = el("statusText");
+  const resultText = el("resultText");
+  const linksBox = el("linksBox");
+  const linksText = el("linksText");
+  const preview = el("preview");
+  const previewImg = el("previewImg");
+  const copyKeyBtn = el("copyKeyBtn");
+  const resetBtn = el("resetBtn");
+
+  const apiDot = el("apiDot");
+  const apiText = el("apiText");
+
+  let lastKey = "";
+
+  function setStatus(kind, text) {
+    statusText.textContent = text;
+    statusDot.className = "dot " + (kind === "ok" ? "ok" : kind === "bad" ? "bad" : "");
+  }
+
+  function setApiStatus(kind, text) {
+    apiText.textContent = text;
+    apiDot.className = "dot " + (kind === "ok" ? "ok" : kind === "bad" ? "bad" : "");
+  }
+
+  function humanSize(bytes){
+    const units = ["B","KB","MB","GB"];
+    let i = 0, n = bytes;
+    while(n >= 1024 && i < units.length-1){ n/=1024; i++; }
+    return (i === 0 ? n : n.toFixed(1)) + " " + units[i];
+  }
+
+  function setFile(file){
+    if(!file) return;
+    fileName.textContent = file.name;
+    fileInfo.textContent = `${file.type || "unknown"} • ${humanSize(file.size)}`;
+  }
+
+  chooseBtn.addEventListener("click", () => fileInput.click());
+  drop.addEventListener("click", () => fileInput.click());
+
+  fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+
+  // Drag & drop
+  drop.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    drop.style.transform = "translateY(-1px)";
+  });
+  drop.addEventListener("dragleave", () => {
+    drop.style.transform = "";
+  });
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    drop.style.transform = "";
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) {
+      fileInput.files = e.dataTransfer.files;
+      setFile(f);
+    }
+  });
+
+  // API health check
+  (async function(){
+    try{
+      const r = await fetch(API_BASE + "/api/health", { method: "GET" });
+      if(!r.ok) throw new Error("bad status");
+      setApiStatus("ok", "API online");
+    }catch(e){
+      setApiStatus("bad", "API unreachable");
+    }
+  })();
+
+  // Upload with progress using XHR (fetch doesn't provide upload progress)
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const email = el("email").value.trim();
+    const checkpoint = el("checkpoint").value.trim();
+    const file = fileInput.files[0];
+
+    if (!email || !checkpoint || !file) {
+      setStatus("bad", "Missing email, checkpoint ID, or file.");
+      return;
+    }
+
+    // reset output
+    lastKey = "";
+    resultText.textContent = "—";
+    linksBox.style.display = "none";
+    linksText.textContent = "";
+    preview.style.display = "none";
+    previewImg.src = "";
+    copyKeyBtn.disabled = true;
+
+    progress.style.width = "0%";
+    setStatus("", "Uploading…");
+    submitBtn.disabled = true;
+
+    const data = new FormData();
+    data.append("email", email);
+    data.append("checkpoint_id", checkpoint);
+    data.append("file", file, file.name);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", UPLOAD_ENDPOINT, true);
+    xhr.withCredentials = true;
+
+    xhr.upload.onprogress = (evt) => {
+      if (evt.lengthComputable) {
+        const pct = Math.round((evt.loaded / evt.total) * 100);
+        progress.style.width = pct + "%";
+      }
+    };
+
+    xhr.onerror = () => {
+      submitBtn.disabled = false;
+      setStatus("bad", "Network error.");
+    };
+
+    xhr.onload = () => {
+      submitBtn.disabled = false;
+      progress.style.width = "100%";
+
+      let payload = null;
+      try { payload = JSON.parse(xhr.responseText || "{}"); } catch {}
+
+      if (xhr.status >= 200 && xhr.status < 300 && payload && payload.success) {
+        lastKey = payload.key || "";
+        setStatus("ok", "Upload complete");
+        resultText.textContent = JSON.stringify(payload, null, 2);
+
+        if (lastKey) {
+          const viewUrl = VIEW_ENDPOINT + encodeURIComponent(lastKey);
+          linksBox.style.display = "block";
+          linksText.innerHTML =
+            `<div>Key:</div><div class="kv">${lastKey}</div><br/>` +
+            `<div>Preview:</div><div class="kv"><a href="${viewUrl}" target="_blank" rel="noreferrer">${viewUrl}</a></div>`;
+
+          preview.style.display = "block";
+          previewImg.src = viewUrl;
+
+          copyKeyBtn.disabled = false;
         }
-      );
+      } else {
+        setStatus("bad", "Upload failed");
+        resultText.textContent = xhr.responseText || `HTTP ${xhr.status}`;
+      }
+    };
 
-      const data = await res.json();
-      result.textContent = JSON.stringify(data, null, 2);
-    });
-  </script>
+    xhr.send(data);
+  });
+
+  copyKeyBtn.addEventListener("click", async () => {
+    if (!lastKey) return;
+    try{
+      await navigator.clipboard.writeText(lastKey);
+      setStatus("ok", "Key copied to clipboard");
+    }catch{
+      setStatus("bad", "Could not copy key (clipboard blocked)");
+    }
+  });
+
+  resetBtn.addEventListener("click", () => {
+    form.reset();
+    fileName.textContent = "Choose a file";
+    fileInfo.textContent = "PNG/JPG/WEBP • Max 10MB";
+    progress.style.width = "0%";
+    lastKey = "";
+    resultText.textContent = "—";
+    linksBox.style.display = "none";
+    preview.style.display = "none";
+    previewImg.src = "";
+    copyKeyBtn.disabled = true;
+    setStatus("", "Waiting for upload…");
+  });
+
+  // initial state
+  setStatus("", "Waiting for upload…");
+</script>
 </body>
 </html>
