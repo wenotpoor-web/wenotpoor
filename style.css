@@ -171,3 +171,22 @@ h1 {
   border: 1px solid #1a1a1a;
 }
 
+.oath {
+  max-width: 560px;
+}
+
+.oath-text {
+  text-align: left;
+  color: #e6e6e6;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  letter-spacing: 0.2px;
+}
+
+.oath-check {
+  margin-top: 1.5rem;
+}
+
+.oath-check input {
+  accent-color: #FFD400;
+}
