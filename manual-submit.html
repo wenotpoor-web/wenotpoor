@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>We Not Poor — Manual Submission</title>
+  <style>
+    :root{
+      --bg:#070707;
+      --panel:#0f0f0f;
+      --panel2:#0b0b0b;
+      --line:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --gold:#f2c14e;
+      --gold2:#ffd36e;
+      --bad:#ff5b6b;
+      --ok:#38d39f;
+      --radius:14px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 50% -10%, rgba(242,193,78,.12), transparent 60%),
+        radial-gradient(700px 400px at 10% 0%, rgba(255,211,110,.08), transparent 55%),
+        var(--bg);
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:28px 14px;
+    }
+    .wrap{width:min(980px, 100%);}
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:14px;
+      margin-bottom:14px;
+    }
+    .title{
+      margin:0;
+      font-size:clamp(22px, 2.8vw, 34px);
+      letter-spacing:.3px;
+      line-height:1.1;
+    }
+    .subtitle{
+      margin:8px 0 0 0;
+      color:var(--muted);
+      max-width:70ch;
+      font-size:14px;
+      line-height:1.5;
+    }
+    .badge{
+      border:1px solid rgba(242,193,78,.35);
+      color:rgba(255,255,255,.86);
+      background: rgba(242,193,78,.06);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+    }
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+    .pane{padding:18px;}
+    .pane + .pane{border-left:1px solid var(--line);}
+    @media (max-width:900px){ .pane + .pane{border-left:none;border-top:1px solid var(--line);} }
+
+    .sectionTitle{
+      margin:0 0 12px 0;
+      color:rgba(255,255,255,.7);
+      font-size:12px;
+      letter-spacing:.28em;
+      text-transform:uppercase;
+    }
+
+    .notice{
+      border:1px solid rgba(242,193,78,.30);
+      background: rgba(242,193,78,.06);
+      padding:12px;
+      border-radius: var(--radius);
+      color:rgba(255,255,255,.84);
+      font-size:13px;
+      line-height:1.45;
+      margin-bottom:14px;
+    }
+    .notice b{color:var(--gold2)}
+    form{display:grid; gap:12px;}
+    .row{display:flex; gap:12px; flex-wrap:wrap;}
+    .row > *{flex:1; min-width: 220px;}
+    label{display:grid; gap:7px; font-size:13px; color:var(--muted);}
+    input[type="text"], input[type="email"], textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:120px; resize:vertical; line-height:1.4;}
+    .drop{
+      border:1px dashed rgba(255,255,255,.22);
+      border-radius:14px;
+      background: rgba(0,0,0,.22);
+      padding:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    .drop:hover{
+      transform: translateY(-1px);
+      background: rgba(0,0,0,.30);
+      border-color: rgba(242,193,78,.35);
+    }
+    .filemeta{display:flex; flex-direction:column; gap:4px;}
+    .filemeta b{font-size:14px; color:rgba(255,255,255,.9);}
+    .filemeta span{font-size:12px; color:var(--muted);}
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(242,193,78,.50);
+      background: linear-gradient(180deg, rgba(242,193,78,.22), rgba(242,193,78,.12));
+      color:rgba(255,255,255,.92);
+      padding:12px 14px;
+      border-radius:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .08s ease, filter .2s ease, opacity .2s ease;
+    }
+    .btn:hover{transform: translateY(-1px); filter: brightness(1.02);}
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none;}
+    .btn.secondary{
+      border:1px solid rgba(255,255,255,.16);
+      background: transparent;
+      font-weight:700;
+      color:rgba(255,255,255,.82);
+    }
+
+    .hint{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .bar{
+      height:10px;
+      width:100%;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(242,193,78,.85), rgba(255,211,110,.85));
+      transition: width .18s ease;
+    }
+
+    .box{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      border-radius:14px;
+      padding:12px;
+      overflow:auto;
+    }
+    .status{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .dot{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.35);}
+    .dot.ok{background:var(--ok)}
+    .dot.bad{background:var(--bad)}
+    .kv{
+      font-family: var(--mono);
+      font-size:12px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      color:rgba(255,255,255,.88);
+      margin:0;
+    }
+    .preview{
+      display:none;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .preview img{width:100%; height:auto; display:block;}
+    .footer{
+      margin-top:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    a{color:var(--gold2); text-decoration:none}
+    a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1 class="title">Manual Submission</h1>
+        <p class="subtitle">
+          Use this option if you purchased from Amazon or another retailer and did not receive a book code.
+          Upload your purchase proof, upload one completed checkpoint photo, and answer the question.
+        </p>
+      </div>
+      <div class="badge">Membership approval is not guaranteed</div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <!-- Left -->
+        <div class="pane">
+          <p class="sectionTitle">Submission</p>
+
+          <div class="notice">
+            <b>Important:</b> Submissions are reviewed. Any mismatch, missing proof, or altered screenshots may result in denial.
+            If approved, you will receive a temporary password by email to set up your membership login.
+          </div>
+
+          <form id="form">
+            <div class="row">
+              <label>
+                Membership email
+                <input id="email" name="email" type="email" placeholder="you@example.com" required />
+              </label>
+              <label>
+                Confirm email
+                <input id="email2" type="email" placeholder="you@example.com" required />
+              </label>
+            </div>
+
+            <label>
+              Retailer (optional)
+              <input id="retailer" name="retailer" type="text" placeholder="Amazon, Barnes & Noble, etc." />
+            </label>
+
+            <!-- Receipt upload -->
+            <input id="receiptFile" name="receipt_file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+            <div class="drop" id="receiptDrop" role="button" tabindex="0">
+              <div class="filemeta">
+                <b id="receiptName">Upload receipt / invoice screenshot</b>
+                <span id="receiptInfo">PNG/JPG/WEBP • Max 10MB • Must show purchase confirmation</span>
+              </div>
+              <button class="btn secondary" type="button" id="receiptBrowse">Browse</button>
+            </div>
+
+            <!-- Checkpoint proof upload -->
+            <input id="checkpointFile" name="checkpoint_file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+            <div class="drop" id="checkpointDrop" role="button" tabindex="0">
+              <div class="filemeta">
+                <b id="checkpointName">Upload checkpoint proof image</b>
+                <span id="checkpointInfo">PNG/JPG/WEBP • Max 10MB • One completed checkpoint from the book</span>
+              </div>
+              <button class="btn secondary" type="button" id="checkpointBrowse">Browse</button>
+            </div>
+
+            <label>
+              Answer the question (required)
+              <textarea id="answer" name="answer" placeholder="Type your answer here..." required></textarea>
+            </label>
+
+            <div class="bar" aria-label="Upload progress">
+              <div id="progress"></div>
+            </div>
+
+            <button class="btn" id="submitBtn" type="submit">
+              Submit for Review <span style="opacity:.9">→</span>
+            </button>
+
+            <p class="hint">
+              This sends your files securely to the We Not Poor review queue.
+            </p>
+          </form>
+        </div>
+
+        <!-- Right -->
+        <div class="pane">
+          <p class="sectionTitle">Result</p>
+
+          <div class="box">
+            <div class="status">
+              <span class="dot" id="statusDot"></span>
+              <span id="statusText">Waiting for submission…</span>
+            </div>
+            <pre class="kv" id="resultText">—</pre>
+          </div>
+
+          <div class="preview" id="receiptPreview" style="margin-top:12px;">
+            <img id="receiptImg" alt="Receipt preview" />
+          </div>
+
+          <div class="preview" id="checkpointPreview" style="margin-top:12px;">
+            <img id="checkpointImg" alt="Checkpoint preview" />
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <button class="btn secondary" type="button" id="resetBtn">Reset</button>
+          </div>
+
+          <p class="hint" style="margin-top:12px;">
+            After you submit, complete the Oath. Your account will show <b>Pending Activation</b> until approved.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>We Not Poor</div>
+      <div><a href="/login.html">Already submitted? Sign in to check status</a></div>
+    </div>
+  </div>
+
+<script>
+  // ✅ Update this if you later use a custom API domain
+  const API_BASE = "https://wenotpoor-api.wenotpoor.workers.dev";
+  const ENDPOINT = API_BASE + "/api/manual/submit";
+
+  const el = (id) => document.getElementById(id);
+
+  const form = el("form");
+  const submitBtn = el("submitBtn");
+  const progress = el("progress");
+
+  const statusDot = el("statusDot");
+  const statusText = el("statusText");
+  const resultText = el("resultText");
+
+  const email = el("email");
+  const email2 = el("email2");
+  const retailer = el("retailer");
+  const answer = el("answer");
+
+  const receiptFile = el("receiptFile");
+  const receiptDrop = el("receiptDrop");
+  const receiptBrowse = el("receiptBrowse");
+  const receiptName = el("receiptName");
+  const receiptInfo = el("receiptInfo");
+
+  const checkpointFile = el("checkpointFile");
+  const checkpointDrop = el("checkpointDrop");
+  const checkpointBrowse = el("checkpointBrowse");
+  const checkpointName = el("checkpointName");
+  const checkpointInfo = el("checkpointInfo");
+
+  const receiptPreview = el("receiptPreview");
+  const receiptImg = el("receiptImg");
+  const checkpointPreview = el("checkpointPreview");
+  const checkpointImg = el("checkpointImg");
+
+  const resetBtn = el("resetBtn");
+
+  function setStatus(kind, text){
+    statusText.textContent = text;
+    statusDot.className = "dot " + (kind === "ok" ? "ok" : kind === "bad" ? "bad" : "");
+  }
+
+  function humanSize(bytes){
+    const units = ["B","KB","MB","GB"];
+    let i = 0, n = bytes;
+    while(n >= 1024 && i < units.length-1){ n/=1024; i++; }
+    return (i===0 ? n : n.toFixed(1)) + " " + units[i];
+  }
+
+  function setFileMeta(file, nameEl, infoEl, defaultTitle, defaultInfo){
+    if(!file){
+      nameEl.textContent = defaultTitle;
+      infoEl.textContent = defaultInfo;
+      return;
+    }
+    nameEl.textContent = file.name;
+    infoEl.textContent = `${file.type || "unknown"} • ${humanSize(file.size)}`;
+  }
+
+  function previewFile(file, imgEl, wrapEl){
+    if(!file){ wrapEl.style.display="none"; imgEl.src=""; return; }
+    const url = URL.createObjectURL(file);
+    imgEl.src = url;
+    wrapEl.style.display="block";
+  }
+
+  function wirePicker(dropEl, browseBtn, inputEl){
+    browseBtn.addEventListener("click", (e) => { e.stopPropagation(); inputEl.click(); });
+    dropEl.addEventListener("click", () => inputEl.click());
+    dropEl.addEventListener("keydown", (e) => { if(e.key==="Enter" || e.key===" "){ e.preventDefault(); inputEl.click(); }});
+  }
+
+  wirePicker(receiptDrop, receiptBrowse, receiptFile);
+  wirePicker(checkpointDrop, checkpointBrowse, checkpointFile);
+
+  receiptFile.addEventListener("change", () => {
+    const f = receiptFile.files[0];
+    setFileMeta(f, receiptName, receiptInfo,
+      "Upload receipt / invoice screenshot",
+      "PNG/JPG/WEBP • Max 10MB • Must show purchase confirmation"
+    );
+    previewFile(f, receiptImg, receiptPreview);
+  });
+
+  checkpointFile.addEventListener("change", () => {
+    const f = checkpointFile.files[0];
+    setFileMeta(f, checkpointName, checkpointInfo,
+      "Upload checkpoint proof image",
+      "PNG/JPG/WEBP • Max 10MB • One completed checkpoint from the book"
+    );
+    previewFile(f, checkpointImg, checkpointPreview);
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    setStatus("", "Submitting…");
+    resultText.textContent = "—";
+    progress.style.width = "0%";
+
+    if(email.value.trim().toLowerCase() !== email2.value.trim().toLowerCase()){
+      setStatus("bad", "Emails do not match.");
+      resultText.textContent = "Please confirm your membership email correctly.";
+      return;
+    }
+
+    const rf = receiptFile.files[0];
+    const cf = checkpointFile.files[0];
+
+    if(!rf){
+      setStatus("bad", "Receipt is required.");
+      resultText.textContent = "Upload a screenshot of your retailer purchase confirmation.";
+      return;
+    }
+    if(!cf){
+      setStatus("bad", "Checkpoint proof is required.");
+      resultText.textContent = "Upload one completed checkpoint photo from the book.";
+      return;
+    }
+    if(!answer.value.trim()){
+      setStatus("bad", "Answer is required.");
+      resultText.textContent = "Type your answer before submitting.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+
+    const fd = new FormData();
+    fd.append("email", email.value.trim());
+    fd.append("retailer", retailer.value.trim());
+    fd.append("answer", answer.value.trim());
+    fd.append("receipt_file", rf, rf.name);
+    fd.append("checkpoint_file", cf, cf.name);
+
+    // Use XHR so we can show upload progress
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", ENDPOINT, true);
+    xhr.withCredentials = true;
+
+    xhr.upload.onprogress = (evt) => {
+      if(evt.lengthComputable){
+        const pct = Math.round((evt.loaded/evt.total)*100);
+        progress.style.width = pct + "%";
+      }
+    };
+
+    xhr.onerror = () => {
+      submitBtn.disabled = false;
+      setStatus("bad", "Network error.");
+      resultText.textContent = "Could not submit. Try again.";
+    };
+
+    xhr.onload = () => {
+      submitBtn.disabled = false;
+      progress.style.width = "100%";
+
+      let payload = null;
+      try{ payload = JSON.parse(xhr.responseText || "{}"); }catch{}
+
+      if(xhr.status >= 200 && xhr.status < 300){
+        setStatus("ok", "Submitted. Pending activation.");
+        resultText.textContent = JSON.stringify(payload || { ok:true }, null, 2);
+
+        // Optional: redirect to oath page once your oath page exists
+        // window.location.href = "/oath.html";
+      }else{
+        setStatus("bad", "Submission failed.");
+        resultText.textContent = xhr.responseText || `HTTP ${xhr.status}`;
+      }
+    };
+
+    xhr.send(fd);
+  });
+
+  resetBtn.addEventListener("click", () => {
+    form.reset();
+    submitBtn.disabled = false;
+    progress.style.width = "0%";
+    setStatus("", "Waiting for submission…");
+    resultText.textContent = "—";
+
+    setFileMeta(null, receiptName, receiptInfo,
+      "Upload receipt / invoice screenshot",
+      "PNG/JPG/WEBP • Max 10MB • Must show purchase confirmation"
+    );
+    setFileMeta(null, checkpointName, checkpointInfo,
+      "Upload checkpoint proof image",
+      "PNG/JPG/WEBP • Max 10MB • One completed checkpoint from the book"
+    );
+
+    previewFile(null, receiptImg, receiptPreview);
+    previewFile(null, checkpointImg, checkpointPreview);
+  });
+
+  // initial state
+  setStatus("", "Waiting for submission…");
+</script>
+</body>
+</html>
