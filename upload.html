@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Checkpoint Upload</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Upload Checkpoint Proof</h1>
+
+  <form id="uploadForm">
+    <label>
+      Email
+      <input type="email" name="email" required />
+    </label>
+    <br /><br />
+
+    <label>
+      Checkpoint ID
+      <input type="text" name="checkpoint_id" value="cp-0" required />
+    </label>
+    <br /><br />
+
+    <label>
+      Image
+      <input type="file" name="file" accept="image/*" required />
+    </label>
+    <br /><br />
+
+    <button type="submit">Upload</button>
+  </form>
+
+  <pre id="result"></pre>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fd = new FormData(form);
+
+      const res = await fetch(
+        "https://wenotpoor-api.wenotpoor.workers.dev/api/uploads",
+        {
+          method: "POST",
+          body: fd,
+          credentials: "include"
+        }
+      );
+
+      const data = await res.json();
+      result.textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
