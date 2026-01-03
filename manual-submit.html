@@ -90,10 +90,17 @@
       setResult("Reset.");
     };
 
+    function validateFile(file) {
+      if (!file) return "Missing file.";
+      const okTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
+      if (!okTypes.has(file.type)) return "Unsupported file type. Use PNG/JPG/WEBP.";
+      if (file.size > 10 * 1024 * 1024) return "File too large. Max 10MB.";
+      return null;
+    }
+
     async function uploadOne(file, kind) {
       const form = new FormData();
-      form.append("kind", kind);                 // receipt | checkpoint
-      form.append("checkpoint_id", "cp-0");      // internal placeholder
+      form.append("kind", kind); // receipt | checkpoint
       form.append("file", file);
 
       const r = await fetch(API + "/api/uploads", {
@@ -112,8 +119,12 @@
       const checkpoint = $("checkpoint").files[0];
       const answer = $("answer").value.trim();
 
-      if (!receipt) return setResult("Upload a receipt/invoice image.", true);
-      if (!checkpoint) return setResult("Upload a checkpoint proof image.", true);
+      const rErr = validateFile(receipt);
+      if (rErr) return setResult("Receipt: " + rErr, true);
+
+      const cErr = validateFile(checkpoint);
+      if (cErr) return setResult("Checkpoint proof: " + cErr, true);
+
       if (!answer) return setResult("Answer the question.", true);
 
       try {
@@ -123,10 +134,9 @@
         setResult("Uploading checkpoint proof…");
         const checkpoint_key = await uploadOne(checkpoint, "checkpoint");
 
-        // Stage this for email-setup screen
+        // Stage for email-setup screen
         const payload = {
           mode: "manual",
-          checkpoint_id: "cp-0",
           receipt_key,
           checkpoint_key,
           answer
