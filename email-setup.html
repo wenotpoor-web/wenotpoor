@@ -1,286 +1,218 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Email Setup</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>We Not Poor — Email & Password</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 
-<body class="centered">
-  <main>
-    <h1>CLAIM YOUR ACCESS</h1>
-    <div class="divider"></div>
+<body class="wnp">
+  <main class="wrap">
+    <header class="hero">
+      <div class="brand">WE NOT POOR</div>
+      <h1>Email & Password Setup</h1>
+      <p class="sub">
+        Confirm your email. We’ll send a temporary password. Then you’ll set your permanent password.
+      </p>
+    </header>
 
-    <p class="sub">
-      Membership is tied to an email address.<br />
-      Choose it carefully.
-    </p>
-
-    <div class="panel">
-      <div id="modeBanner" class="msg" style="display:none;"></div>
-      <div id="msg" class="msg" style="display:none;"></div>
-
-      <!-- STEP 1: Email capture -->
-      <div id="stepEmail">
-        <label class="label" for="email">Email address</label>
-        <input class="input" id="email" type="email" placeholder="you@domain.com" autocomplete="email" />
-
-        <label class="label" for="email2">Confirm email address</label>
-        <input class="input" id="email2" type="email" placeholder="re-enter your email" autocomplete="email" />
-
-        <p class="note">
-          You will receive a <b>temporary password</b> by email.
-          You will use it once to create your permanent password.
-          <br /><br />
-          • Temporary password expires<br />
-          • Do not share it<br />
-          • You are responsible for securing your access
-        </p>
-
-        <button id="sendTempBtn" class="btn block">SEND TEMP PASSWORD →</button>
-
-        <p class="fine" style="margin-top:14px;">
-          By continuing, you acknowledge that access is earned, not guaranteed.
-        </p>
+    <section class="card">
+      <div class="card-h">
+        <div class="card-title">STEP 1 — CONFIRM EMAIL</div>
+        <div class="pill" id="apiPill">API: checking…</div>
       </div>
 
-      <!-- STEP 2: Temp password + create permanent password -->
-      <div id="stepPassword" style="display:none;">
-        <div class="msg" style="display:block;">
-          Check your email. Enter the temporary password below. Then set your permanent password.
+      <div class="grid-2">
+        <label class="field">
+          <span>Email</span>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        </label>
+
+        <label class="field">
+          <span>Confirm Email</span>
+          <input id="email2" type="email" placeholder="retype email" autocomplete="email" />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="sendTemp">Send temporary password</button>
+        <button class="btn ghost" id="resetAll" type="button">Reset</button>
+      </div>
+
+      <div class="note">
+        Temporary passwords look like: <b>Discipline243</b>, <b>Clarity087</b>, etc.
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h">
+        <div class="card-title">STEP 2 — SET PASSWORD</div>
+        <div class="muted">Minimum 8 chars, include a number + special character.</div>
+      </div>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Temporary Password</span>
+          <input id="temp" type="text" placeholder="Discipline243" />
+        </label>
+
+        <label class="field">
+          <span>New Password</span>
+          <input id="pw" type="password" placeholder="••••••••" autocomplete="new-password" />
+        </label>
+
+        <label class="field">
+          <span>Confirm New Password</span>
+          <input id="pw2" type="password" placeholder="••••••••" autocomplete="new-password" />
+        </label>
+
+        <div class="field">
+          <span>Mode</span>
+          <div class="mode">
+            <label class="radio">
+              <input type="radio" name="mode" value="manual" checked />
+              <span>Manual approval (receipt)</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="mode" value="auto" />
+              <span>Auto approval (book code)</span>
+            </label>
+          </div>
         </div>
-
-        <label class="label" for="tempPassword">Temporary password</label>
-        <input class="input" id="tempPassword" type="text" placeholder="Discipline243" autocomplete="one-time-code" />
-
-        <label class="label" for="newPassword">Create password</label>
-        <input class="input" id="newPassword" type="password" placeholder="New password" autocomplete="new-password" />
-
-        <label class="label" for="newPassword2">Confirm password</label>
-        <input class="input" id="newPassword2" type="password" placeholder="Re-enter password" autocomplete="new-password" />
-
-        <ul class="rules">
-          <li>At least <span class="kbd">8</span> characters</li>
-          <li>Includes <span class="kbd">1 number</span></li>
-          <li>Includes <span class="kbd">1 special character</span></li>
-        </ul>
-
-        <button id="setPasswordBtn" class="btn block">SET PASSWORD & CONTINUE →</button>
-
-        <a href="/member.html" class="btn block" style="margin-top:12px; border-color:#333; color:#ddd;">
-          BACK
-        </a>
       </div>
-    </div>
 
-    <p class="fine" style="margin-top:20px;">
-      We Not Poor
-    </p>
+      <div class="actions">
+        <button class="btn" id="confirmPw">Set password & continue</button>
+      </div>
+
+      <pre class="result" id="result">Waiting…</pre>
+    </section>
+
+    <footer class="foot">
+      <span>© We Not Poor</span>
+      <span class="muted">Membership is not open. It is earned.</span>
+    </footer>
   </main>
 
-<script>
-  // ============================
-  // CONFIG — UPDATE IF NEEDED
-  // ============================
-  const API_BASE = "https://wenotpoor-api.wenotpoor.workers.dev";
+  <script>
+    const API = "https://wenotpoor-api.wenotpoor.workers.dev";
 
-  // These endpoints are what this screen expects.
-  // If your Worker uses different routes, tell me what they are and I’ll adjust this file.
-  const ENDPOINT_SEND_TEMP = API_BASE + "/api/auth/send-temp";
-  const ENDPOINT_SET_PASSWORD = API_BASE + "/api/auth/set-password-with-temp";
+    const $ = (id) => document.getElementById(id);
+    const result = $("result");
 
-  // Redirect rules (LOCKED)
-  // auto  -> oath next
-  // manual-> pending next (NO oath until approved)
-  const REDIRECT_AUTO = "/oath.html";
-  const REDIRECT_MANUAL = "/pending.html";
-
-  // ============================
-  // STATE (from previous screens)
-  // ============================
-  const mode = (localStorage.getItem("wnp_mode") || "manual").toLowerCase(); // "auto" | "manual"
-  const submissionId = localStorage.getItem("wnp_submission_id") || "";
-
-  // ============================
-  // ELEMENTS
-  // ============================
-  const el = (id) => document.getElementById(id);
-
-  const modeBanner = el("modeBanner");
-  const msg = el("msg");
-
-  const stepEmail = el("stepEmail");
-  const stepPassword = el("stepPassword");
-
-  const email = el("email");
-  const email2 = el("email2");
-
-  const sendTempBtn = el("sendTempBtn");
-
-  const tempPassword = el("tempPassword");
-  const newPassword = el("newPassword");
-  const newPassword2 = el("newPassword2");
-  const setPasswordBtn = el("setPasswordBtn");
-
-  // ============================
-  // HELPERS
-  // ============================
-  function showMessage(type, text) {
-    msg.className = "msg " + (type || "");
-    msg.textContent = text;
-    msg.style.display = "block";
-  }
-
-  function clearMessage() {
-    msg.style.display = "none";
-    msg.textContent = "";
-    msg.className = "msg";
-  }
-
-  function showMode() {
-    modeBanner.style.display = "block";
-    modeBanner.className = "msg";
-    if (mode === "auto") {
-      modeBanner.textContent = "AUTO APPROVAL PATH: After password setup you will take the Oath.";
-    } else {
-      modeBanner.textContent = "MANUAL REVIEW PATH: After password setup you will enter Pending Activation. No Oath until approved.";
-    }
-  }
-
-  function emailsMatch() {
-    const a = (email.value || "").trim().toLowerCase();
-    const b = (email2.value || "").trim().toLowerCase();
-    return a && b && a === b;
-  }
-
-  function passwordValid(pw) {
-    if (!pw || pw.length < 8) return false;
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    return hasNumber && hasSpecial;
-  }
-
-  function disable(btn, on) {
-    btn.disabled = !!on;
-  }
-
-  async function postJson(url, body) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(body)
-    });
-    const text = await res.text();
-    let data = {};
-    try { data = JSON.parse(text || "{}"); } catch {}
-    if (!res.ok) {
-      const err = data.error || text || ("HTTP " + res.status);
-      throw new Error(err);
-    }
-    return data;
-  }
-
-  // ============================
-  // INIT
-  // ============================
-  showMode();
-
-  // ============================
-  // STEP 1: SEND TEMP PASSWORD
-  // ============================
-  sendTempBtn.addEventListener("click", async () => {
-    clearMessage();
-
-    if (!emailsMatch()) {
-      showMessage("bad", "Emails do not match.");
-      return;
+    function setResult(msg, isErr=false) {
+      result.textContent = msg;
+      result.classList.toggle("err", !!isErr);
     }
 
-    const e = email.value.trim().toLowerCase();
-
-    disable(sendTempBtn, true);
-    showMessage("", "Sending temporary password…");
-
-    try {
-      // Lock: temp password applies to both paths
-      // Include mode + submissionId if we have it
-      const payload = {
-        email: e,
-        mode,
-        submission_id: submissionId || null
-      };
-
-      await postJson(ENDPOINT_SEND_TEMP, payload);
-
-      // Store canonical email for later screens
-      localStorage.setItem("wnp_email", e);
-
-      showMessage("good", "Temporary password sent. Check your email.");
-      stepEmail.style.display = "none";
-      stepPassword.style.display = "block";
-    } catch (err) {
-      showMessage("bad", err.message || "Failed to send temporary password.");
-    } finally {
-      disable(sendTempBtn, false);
-    }
-  });
-
-  // ============================
-  // STEP 2: SET PERMANENT PASSWORD
-  // ============================
-  setPasswordBtn.addEventListener("click", async () => {
-    clearMessage();
-
-    const e = (localStorage.getItem("wnp_email") || email.value || "").trim().toLowerCase();
-    const temp = (tempPassword.value || "").trim();
-    const pw1 = (newPassword.value || "");
-    const pw2 = (newPassword2.value || "");
-
-    if (!e) {
-      showMessage("bad", "Missing email.");
-      return;
-    }
-    if (!temp) {
-      showMessage("bad", "Temporary password is required.");
-      return;
-    }
-    if (pw1 !== pw2) {
-      showMessage("bad", "Passwords do not match.");
-      return;
-    }
-    if (!passwordValid(pw1)) {
-      showMessage("bad", "Password does not meet requirements.");
-      return;
+    function modeValue() {
+      const sel = document.querySelector('input[name="mode"]:checked');
+      return sel ? sel.value : "manual";
     }
 
-    disable(setPasswordBtn, true);
-    showMessage("", "Setting password…");
+    function pullCarryover() {
+      // manual-submit stores payload here
+      const raw = sessionStorage.getItem("wnp_payload");
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
 
-    try {
-      const payload = {
-        email: e,
-        temp_password: temp,
-        new_password: pw1,
-        mode,
-        submission_id: submissionId || null
-      };
-
-      await postJson(ENDPOINT_SET_PASSWORD, payload);
-
-      // Redirect by locked flow
-      if (mode === "auto") {
-        window.location.href = REDIRECT_AUTO;
-      } else {
-        window.location.href = REDIRECT_MANUAL;
+    async function health() {
+      try {
+        const r = await fetch(API + "/api/health", { credentials: "include" });
+        const ok = r.ok;
+        $("apiPill").textContent = ok ? "API: online" : "API: offline";
+        $("apiPill").classList.toggle("good", ok);
+      } catch {
+        $("apiPill").textContent = "API: offline";
+        $("apiPill").classList.remove("good");
       }
-    } catch (err) {
-      showMessage("bad", err.message || "Failed to set password.");
-      disable(setPasswordBtn, false);
     }
-  });
-</script>
+
+    health();
+
+    $("resetAll").onclick = () => {
+      ["email","email2","temp","pw","pw2"].forEach(id => $(id).value = "");
+      sessionStorage.removeItem("wnp_payload");
+      setResult("Reset.");
+    };
+
+    $("sendTemp").onclick = async () => {
+      const email = $("email").value.trim();
+      const email2 = $("email2").value.trim();
+
+      if (!email || !email2) return setResult("Enter email twice.", true);
+      if (email !== email2) return setResult("Emails do not match.", true);
+
+      setResult("Sending temporary password…");
+
+      const payload = pullCarryover() || {};
+      payload.email = email;
+      payload.mode = modeValue();
+      sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
+
+      const r = await fetch(API + "/api/auth/temp-password/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        credentials: "include"
+      });
+
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) return setResult(data.error || "Failed to send temp password.", true);
+
+      setResult("Temporary password sent. Check your inbox (and spam).");
+    };
+
+    $("confirmPw").onclick = async () => {
+      const email = $("email").value.trim();
+      const temp = $("temp").value.trim();
+      const pw = $("pw").value;
+      const pw2 = $("pw2").value;
+      const mode = modeValue();
+
+      if (!email) return setResult("Enter your email.", true);
+      if (!temp) return setResult("Enter the temporary password you received.", true);
+      if (!pw || !pw2) return setResult("Enter your new password twice.", true);
+      if (pw !== pw2) return setResult("New passwords do not match.", true);
+      if (pw.length < 8) return setResult("Password must be at least 8 characters.", true);
+
+      const hasNum = /[0-9]/.test(pw);
+      const hasSpec = /[^A-Za-z0-9]/.test(pw);
+      if (!hasNum || !hasSpec) return setResult("Include at least 1 number and 1 special character.", true);
+
+      setResult("Setting password…");
+
+      // include any staged uploads/answer from previous screen
+      const staged = pullCarryover() || {};
+      const r = await fetch(API + "/api/auth/temp-password/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          temp_password: temp,
+          new_password: pw,
+          mode,
+          staged
+        }),
+        credentials: "include"
+      });
+
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) return setResult(data.error || "Failed to set password.", true);
+
+      // routing based on mode + status
+      sessionStorage.removeItem("wnp_payload");
+
+      if (mode === "manual") {
+        // oath is locked until approved
+        window.location.href = "/pending.html";
+      } else {
+        // auto path goes to oath next
+        window.location.href = "/oath.html";
+      }
+    };
+  </script>
 </body>
 </html>
