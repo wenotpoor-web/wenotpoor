@@ -11,7 +11,8 @@
   <main class="wrap">
 
     <header class="hero">
-      <div class="brand-wrap">
+      <!-- brand-offset moves the accent under WE NOT -->
+      <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
       </div>
@@ -20,21 +21,26 @@
       <p class="sub">If you were approved, you enter.<br />If you weren’t, the system tells you why.</p>
     </header>
 
-    <section class="card">
+    <section class="card login-card">
       <form id="loginForm" novalidate>
+
+        <!-- Title inside card like screenshot -->
+        <div class="login-title">LOGIN</div>
+
         <div class="field">
-          <span>Email <span class="req">*</span></span>
-          <input id="email" name="email" type="email" autocomplete="email" placeholder="you@domain.com" required />
+          <span>EMAIL <span class="req">*</span></span>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="" required />
         </div>
 
         <div class="field">
-          <span>Password <span class="req">*</span></span>
-          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          <span>PASSWORD <span class="req">*</span></span>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="" required />
         </div>
 
-        <div class="actions">
-          <button class="btn" type="submit">ENTER</button>
-          <a class="btn ghost" href="/index.html">Back</a>
+        <!-- Buttons separated (stacked) -->
+        <div class="actions actions-stack">
+          <button class="btn" type="submit">LOG IN</button>
+          <a class="btn ghost" href="/index.html">BACK</a>
         </div>
 
         <div id="result" class="result" style="display:none;"></div>
@@ -42,17 +48,56 @@
         <div class="below-links" style="margin-top:14px;">
           <a class="link-item" href="/forgot.html">Forgot password?</a>
         </div>
+
       </form>
     </section>
 
   </main>
 
+  <style>
+    /* Match screenshot proportions */
+    .login-card{
+      max-width: 860px;          /* wider like screenshot */
+      padding: 26px 28px 28px;
+    }
+
+    /* Card title */
+    .login-title{
+      font-weight: 900;
+      letter-spacing: .14em;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: rgba(255,212,0,.92);
+      margin-bottom: 18px;
+    }
+
+    /* Field label look (EMAIL / PASSWORD) */
+    .field > span{
+      font-size: 13px;
+      letter-spacing: .10em;
+      font-weight: 900;
+    }
+
+    /* Inputs: thicker border + taller height like screenshot */
+    input{
+      height: 56px;
+      border-radius: 18px;
+      border: 2px solid rgba(255,212,0,.75);
+      padding: 14px 16px;
+    }
+
+    /* Buttons stacked with separation */
+    .actions-stack{
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .actions-stack .btn{
+      min-width: 170px;
+    }
+  </style>
+
   <script>
-    // IMPORTANT:
-    // Update LOGIN_ENDPOINT to match your Worker route.
-    // Examples:
-    //   const LOGIN_ENDPOINT = "/api/auth/login";
-    //   const LOGIN_ENDPOINT = "https://wenotpoor.com/api/auth/login";
     const LOGIN_ENDPOINT = "/api/auth/login";
 
     const form = document.getElementById("loginForm");
@@ -88,38 +133,18 @@
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          // If your API returns a message/reason, show it
           const msg = data?.error || data?.message || "Login failed.";
           show(msg, true);
           return;
         }
 
-        // Handle status routing:
-        // Expected: data.status in ("active","pending","denied","suspended") etc.
         const status = (data?.status || "").toLowerCase();
 
-        if (status === "active") {
-          // Approved members go to Member Access (or Oath first depending on your flow)
-          window.location.href = "/member-access.html";
-          return;
-        }
+        if (status === "active") { window.location.href = "/member-access.html"; return; }
+        if (status === "pending") { window.location.href = "/decision.html"; return; }
+        if (status === "denied") { window.location.href = "/denied.html"; return; }
+        if (status === "suspended") { show("Account suspended. Check your email for details.", true); return; }
 
-        if (status === "pending") {
-          window.location.href = "/decision.html";
-          return;
-        }
-
-        if (status === "denied") {
-          window.location.href = "/denied.html";
-          return;
-        }
-
-        if (status === "suspended") {
-          show("Account suspended. Check your email for details.", true);
-          return;
-        }
-
-        // Fallback
         window.location.href = "/decision.html";
       } catch (err) {
         show("Network error. Try again.", true);
