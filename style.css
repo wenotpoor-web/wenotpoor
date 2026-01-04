@@ -325,3 +325,25 @@ span .req{
   margin-left: auto;
   margin-right: auto;
 }
+
+/* MEMBERSHIP / ENTRY CARD — TIGHTER, PROPORTIONATE */
+.card{
+  width:100%;
+  max-width:680px;       /* ⬅ tighter than 760 */
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+/* BRAND ACCENT — SMALL RED AUTHORITY MARK */
+.brand-wrap{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+
+.brand-accent{
+  width:42px;            /* intentionally shorter than text */
+  height:3px;
+  background:var(--danger);
+  border-radius:999px;
+}
