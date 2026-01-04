@@ -11,7 +11,7 @@
   <main class="wrap">
 
     <header class="hero">
-      <!-- brand-offset moves the accent under WE NOT -->
+      <!-- accent under WE NOT -->
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -24,23 +24,22 @@
     <section class="card login-card">
       <form id="loginForm" novalidate>
 
-        <!-- Title inside card like screenshot -->
         <div class="login-title">LOGIN</div>
 
         <div class="field">
           <span>EMAIL <span class="req">*</span></span>
-          <input id="email" name="email" type="email" autocomplete="email" placeholder="" required />
+          <input id="email" name="email" type="email" autocomplete="email" required />
         </div>
 
         <div class="field">
           <span>PASSWORD <span class="req">*</span></span>
-          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="" required />
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
         </div>
 
-        <!-- Buttons separated (stacked) -->
+        <!-- Buttons: smaller + separated -->
         <div class="actions actions-stack">
-          <button class="btn" type="submit">LOG IN</button>
-          <a class="btn ghost" href="/index.html">BACK</a>
+          <button class="btn btn-sm" type="submit">LOG IN</button>
+          <a class="btn ghost btn-sm" href="/index.html">BACK</a>
         </div>
 
         <div id="result" class="result" style="display:none;"></div>
@@ -55,13 +54,13 @@
   </main>
 
   <style>
-    /* Match screenshot proportions */
+    /* Card proportions like screenshot */
     .login-card{
-      max-width: 860px;          /* wider like screenshot */
+      max-width: 920px;          /* wide card */
       padding: 26px 28px 28px;
     }
 
-    /* Card title */
+    /* Title inside card */
     .login-title{
       font-weight: 900;
       letter-spacing: .14em;
@@ -71,29 +70,48 @@
       margin-bottom: 18px;
     }
 
-    /* Field label look (EMAIL / PASSWORD) */
+    /* Field spacing (screenshot feel) */
+    .field{ margin: 18px 0; gap: 10px; }
+
+    /* Labels like screenshot */
     .field > span{
       font-size: 13px;
-      letter-spacing: .10em;
+      letter-spacing: .12em;
       font-weight: 900;
+      text-transform: uppercase;
     }
 
-    /* Inputs: thicker border + taller height like screenshot */
-    input{
+    /* Inputs: long rounded wells */
+    .login-card input{
       height: 56px;
       border-radius: 18px;
       border: 2px solid rgba(255,212,0,.75);
-      padding: 14px 16px;
+      padding: 14px 18px;
+      background:#000;
+      color: rgba(255,212,0,.92);
     }
 
-    /* Buttons stacked with separation */
+    /* Buttons stacked + separated */
     .actions-stack{
+      display:flex;
       flex-direction: column;
       gap: 14px;
-      margin-top: 20px;
+      margin-top: 22px;
+      align-items: center;
+      justify-content: center;
     }
-    .actions-stack .btn{
-      min-width: 170px;
+
+    /* Smaller buttons + PERFECT centered text */
+    .btn-sm{
+      min-width: 150px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1;
+      display: inline-flex;        /* 👈 centers text */
+      align-items: center;         /* 👈 centers text */
+      justify-content: center;     /* 👈 centers text */
+      text-align: center;
     }
   </style>
 
@@ -138,6 +156,7 @@
           return;
         }
 
+        // Keep your existing behavior (no decision UI added)
         const status = (data?.status || "").toLowerCase();
 
         if (status === "active") { window.location.href = "/member-access.html"; return; }
