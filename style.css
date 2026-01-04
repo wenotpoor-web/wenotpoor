@@ -312,3 +312,16 @@ span .req{
   display: inline-block;
   transform: translateY(-1px);
 }
+/* Center hero content to align with card */
+.hero{
+  max-width: 760px;       /* SAME as card max-width */
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* Center sub text cleanly */
+.hero .sub{
+  margin-left: auto;
+  margin-right: auto;
+}
