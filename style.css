@@ -31,8 +31,8 @@ body.wnp{
 }
 
 /* If any pages set gradients on body/html, kill them */
-html, body{
-  background: var(--bg) !important;
+html, body {
+  background:#000 !important;
   background-image:none !important;
 }
 
