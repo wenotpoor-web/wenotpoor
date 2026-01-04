@@ -1,212 +1,115 @@
 :root{
   /* WNP CORE — BLACK FIRST */
-  --bg:#000000;          /* site background */
-  --panel:#0b0b0b;       /* card surface */
-  --panel2:#000000;      /* deep black alt */
-  --text:#FFD400;        /* default text on black */
-  --textOnDark:#FFD400;  /* same (kept for compatibility) */
+  --bg:#000000;
+  --panel:#0b0b0b;
+  --panel2:#000000;
+  --text:#FFD400;
+  --textOnDark:#FFD400;
   --muted:rgba(255,212,0,.72);
   --line:rgba(255,212,0,.72);
-  --accent:#FFD400;      /* yellow buttons + focus */
-  --danger:#FF2A2A;      /* red consequence */
-  --good:#16c172;        /* only for “good” indicators */
+  --accent:#FFD400;
+  --danger:#FF2A2A;
+  --good:#16c172;
   --shadow:none;
   --radius:16px;
   --radius2:12px;
 
-  /* Type: hard, clean */
   --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
 
-/* MAIN BACKGROUND: SOLID BLACK, NO GRADIENTS */
+/* MAIN BACKGROUND */
 body.wnp{
   margin:0;
   font-family:var(--font);
   color:var(--text);
-  background: var(--bg) !important;
-  background-image:none !important;
-}
-
-/* If any pages set gradients on body/html, kill them */
-html, body {
   background:#000 !important;
-  background-image:none !important;
 }
 
-/* Layout stays */
+/* Layout */
 .wrap{
   width:min(980px, 92vw);
   margin:0 auto;
   padding:46px 0 54px;
 }
 
+/* HERO */
 .hero{
-  text-align:left;
-  margin-bottom:22px;
+  max-width:640px;              /* aligns with card */
+  margin:0 auto 26px;
+  text-align:center;
 }
 
 .brand{
-  display:inline-block;
   font-weight:900;
   letter-spacing:.18em;
   font-size:13px;
-  color:rgba(255,212,0,.92);
   text-transform:uppercase;
 }
 
+/* BRAND BLOCK */
+.brand-wrap{
+  display:inline-flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+/* DEFAULT (centered accent — used by Checkpoint) */
+.brand-wrap:not(.brand-offset){
+  align-items:center;
+}
+
+/* OFFSET VERSION (Membership / index) */
+.brand-offset{
+  align-items:flex-start;
+}
+
+.brand-accent{
+  width:36px;
+  height:3px;
+  background:var(--danger);
+  border-radius:999px;
+  margin-left:2px;
+}
+
+/* Headings */
 .hero h1{
   margin:14px 0 8px;
   font-size:44px;
-  letter-spacing:.01em;
   font-weight:900;
   text-transform:uppercase;
 }
 
 .sub{
-  margin:0;
+  margin:0 auto;
   max-width:60ch;
   color:var(--muted);
-  line-height:1.5;
   font-weight:600;
 }
 
-/* CARDS */
+/* CARD — SINGLE SOURCE OF TRUTH */
 .card{
-  background: var(--panel);
-  color: var(--textOnDark);
+  width:100%;
+  max-width:640px;              /* ✅ PROPORTIONATE */
+  margin:16px auto;
+  padding:18px;
+  background:var(--panel);
+  color:var(--textOnDark);
   border:2px solid var(--line);
   border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:18px;
-  margin:16px 0;
 }
 
-.card-h{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:14px;
-}
-
-.card-title{
-  font-weight:900;
-  letter-spacing:.14em;
-  font-size:12px;
-  color:rgba(255,212,0,.92);
-  text-transform:uppercase;
-}
-/* Narrow form for focus */
-.card{
-  max-width:760px;
-  margin-left:auto;
-  margin-right:auto;
-}
-/* Pills */
-.pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 10px;
-  border-radius:999px;
-  border:2px solid rgba(255,212,0,.9);
-  color:rgba(255,212,0,.92);
-  font-size:12px;
-  background:transparent;
-  font-weight:800;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-}
-.pill.good{
-  border-color:rgba(22,193,114,.85);
-  color:rgba(22,193,114,.95);
-}
-.pill.good::before{
-  content:"";
-  width:8px;height:8px;border-radius:999px;
-  background:var(--good);
-  display:inline-block;
-}
-
-.grid-2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-@media (max-width: 820px){
-  .grid-2{grid-template-columns:1fr}
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  margin:10px 0;
-}
-.field > span{
-  color:rgba(255,212,0,.92);
-  font-size:13px;
-  letter-spacing:.02em;
-  font-weight:800;
-  text-transform:uppercase;
-}
-
-/* Inputs */
-input, textarea, select{
-  width:100%;
-  border-radius:var(--radius2);
-  border:2px solid rgba(255,212,0,.55);
-  background:#000;
-  color: var(--textOnDark);
-  padding:12px 12px;
-  outline:none;
-  font-weight:700;
-}
-input::placeholder, textarea::placeholder{
-  color:rgba(255,212,0,.45);
-}
-input:focus, textarea:focus, select:focus{
-  border-color: var(--accent);
-  box-shadow:none;
-}
-textarea{resize:vertical; min-height:110px}
-
-.muted{color:rgba(255,212,0,.72); font-size:12px}
-.note{
-  margin-top:10px;
-  color:rgba(255,212,0,.72);
-  font-size:13px;
-  line-height:1.5;
-  font-weight:600;
-}
-
-/* Prompt box */
-.prompt{
-  border:2px solid rgba(255,212,0,.95);
-  background:#000;
-  padding:12px 12px;
-  border-radius:var(--radius2);
-  color:rgba(255,212,0,.92);
-  line-height:1.35;
-  font-weight:700;
-}
-
-/* Actions */
+/* ACTIONS */
 .actions{
   display:flex;
-  gap:12px;
-  align-items:center;
   justify-content:center;
   margin-top:14px;
-  flex-wrap:wrap;
 }
 
-/* Buttons: YELLOW PRIMARY */
+/* BUTTONS */
 .btn{
-  appearance:none;
   border:none;
   border-radius:14px;
   padding:12px 16px;
@@ -214,84 +117,11 @@ textarea{resize:vertical; min-height:110px}
   letter-spacing:.06em;
   cursor:pointer;
   color:#000;
-  background: var(--accent);
+  background:var(--accent);
   text-transform:uppercase;
 }
-.btn:hover{filter:brightness(.98)}
-.btn:active{transform:translateY(1px)}
 
-/* Secondary */
-.btn.ghost{
-  background:transparent;
-  color:var(--textOnDark);
-  border:2px solid rgba(255,212,0,.85);
-}
-.btn.ghost:hover{
-  border-color:var(--accent);
-}
-
-/* Danger button (optional class for Denied / Delete / etc.) */
-.btn.danger{
-  background:var(--danger);
-  color:#fff;
-}
-
-/* Results */
-.result{
-  margin:14px 0 0;
-  padding:12px;
-  border-radius:14px;
-  border:2px solid rgba(255,212,0,.55);
-  background:#000;
-  color:rgba(255,212,0,.92);
-  overflow:auto;
-  font-weight:700;
-}
-.result.err{
-  border-color:rgba(255,42,42,.95);
-  color:#fff;
-}
-.req{
-  color:var(--danger);
-  font-style:normal;
-  margin-left:4px;
-  font-weight:900;
-}
-/* Mode / radio area */
-.mode{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding:10px 12px;
-  border:2px solid rgba(255,212,0,.55);
-  border-radius:var(--radius2);
-  background:#000;
-}
-.radio{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:rgba(255,212,0,.92);
-  font-size:13px;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.04em;
-}
-.radio input{width:auto}
-
-/* Footer — FIXED for black background */
-.foot{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  padding-top:18px;
-  color:rgba(255,212,0,.72);
-  font-size:12px;
-  font-weight:700;
-  opacity:1;
-}
-
-/* Links */
+/* LINKS */
 a{
   color:rgba(255,212,0,.92);
   text-decoration:underline;
@@ -299,51 +129,33 @@ a{
 }
 a:hover{color:#fff}
 
-/* REQUIRED MARK — FORCE RED ALWAYS */
-.req,
-.field .req,
-label .req,
-span .req{
-  color: var(--danger) !important;
-  font-style: normal !important;
-  font-weight: 900 !important;
-  margin-left: 4px;
-  line-height: 1;
-  display: inline-block;
-  transform: translateY(-1px);
-}
-/* Center hero content to align with card */
-.hero{
-  max-width: 760px;       /* SAME as card max-width */
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-}
-
-/* Center sub text cleanly */
-.hero .sub{
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* MEMBERSHIP / ENTRY CARD — TIGHTER, PROPORTIONATE */
-.card{
-  width:100%;
-  max-width:680px;       /* ⬅ tighter than 760 */
-  margin-left:auto !important;
-  margin-right:auto !important;
-}
-/* BRAND ACCENT — SMALL RED AUTHORITY MARK */
-.brand-wrap{
-  display:inline-flex;
+/* BELOW LINKS */
+.below-links{
+  margin-top:18px;
+  display:flex;
   flex-direction:column;
-  align-items:center;
-  gap:4px;
+  gap:10px;
+  text-align:center;
 }
 
-.brand-accent{
-  width:42px;            /* intentionally shorter than text */
-  height:3px;
-  background:var(--danger);
-  border-radius:999px;
+/* REQUIRED ASTERISK */
+.req{
+  color:var(--danger) !important;
+  font-weight:900;
 }
+
+/* TOP-RIGHT LOGIN LINK */
+.top-login{
+  position:fixed;
+  top:16px;
+  right:18px;
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,255,255,.55);
+  text-decoration:none;
+  z-index:1000;
+}
+.top-login span{
+  text-decoration:underline;
+}
+.top-login:hover{color:#fff}
