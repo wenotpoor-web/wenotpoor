@@ -1,16 +1,16 @@
 :root{
-  /* WNP CORE */
-  --bg:#FFD400;          /* true yellow */
-  --panel:#000000;       /* command black */
-  --panel2:#0b0b0b;      /* deep black alt */
-  --text:#000000;        /* default on yellow */
-  --textOnDark:#FFD400;  /* text on black */
-  --muted:rgba(0,0,0,.72);
-  --line:rgba(0,0,0,.88);
-  --accent:#FFD400;
+  /* WNP CORE — BLACK FIRST */
+  --bg:#000000;          /* site background */
+  --panel:#0b0b0b;       /* card surface */
+  --panel2:#000000;      /* deep black alt */
+  --text:#FFD400;        /* default text on black */
+  --textOnDark:#FFD400;  /* same (kept for compatibility) */
+  --muted:rgba(255,212,0,.72);
+  --line:rgba(255,212,0,.72);
+  --accent:#FFD400;      /* yellow buttons + focus */
   --danger:#FF2A2A;      /* red consequence */
-  --good:#16c172;        /* only used for “good” indicators */
-  --shadow:none;         /* no glossy SaaS shadows */
+  --good:#16c172;        /* only for “good” indicators */
+  --shadow:none;
   --radius:16px;
   --radius2:12px;
 
@@ -21,12 +21,19 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 
-/* MAIN BACKGROUND: YELLOW, NO GRADIENTS */
+/* MAIN BACKGROUND: SOLID BLACK, NO GRADIENTS */
 body.wnp{
   margin:0;
   font-family:var(--font);
   color:var(--text);
-  background: var(--bg);
+  background: var(--bg) !important;
+  background-image:none !important;
+}
+
+/* If any pages set gradients on body/html, kill them */
+html, body{
+  background: var(--bg) !important;
+  background-image:none !important;
 }
 
 /* Layout stays */
@@ -37,7 +44,7 @@ body.wnp{
 }
 
 .hero{
-  text-align:left; /* more authoritative than centered */
+  text-align:left;
   margin-bottom:22px;
 }
 
@@ -46,7 +53,7 @@ body.wnp{
   font-weight:900;
   letter-spacing:.18em;
   font-size:13px;
-  color:rgba(0,0,0,.92);
+  color:rgba(255,212,0,.92);
   text-transform:uppercase;
 }
 
@@ -66,7 +73,7 @@ body.wnp{
   font-weight:600;
 }
 
-/* CARDS: BLACK BLOCKS WITH YELLOW/BLACK EDGE */
+/* CARDS */
 .card{
   background: var(--panel);
   color: var(--textOnDark);
@@ -93,7 +100,7 @@ body.wnp{
   text-transform:uppercase;
 }
 
-/* Pills: minimal, high contrast */
+/* Pills */
 .pill{
   display:inline-flex;
   align-items:center;
@@ -142,39 +149,39 @@ body.wnp{
   text-transform:uppercase;
 }
 
-/* Inputs: black surface, yellow focus, red errors */
-input, textarea{
+/* Inputs */
+input, textarea, select{
   width:100%;
   border-radius:var(--radius2);
-  border:2px solid rgba(255,212,0,.65);
-  background: #000;
+  border:2px solid rgba(255,212,0,.55);
+  background:#000;
   color: var(--textOnDark);
   padding:12px 12px;
   outline:none;
   font-weight:700;
 }
 input::placeholder, textarea::placeholder{
-  color:rgba(255,212,0,.55);
+  color:rgba(255,212,0,.45);
 }
-input:focus, textarea:focus{
+input:focus, textarea:focus, select:focus{
   border-color: var(--accent);
   box-shadow:none;
 }
 textarea{resize:vertical; min-height:110px}
 
-.muted{color:rgba(255,212,0,.75); font-size:12px}
+.muted{color:rgba(255,212,0,.72); font-size:12px}
 .note{
   margin-top:10px;
-  color:rgba(255,212,0,.75);
+  color:rgba(255,212,0,.72);
   font-size:13px;
   line-height:1.5;
   font-weight:600;
 }
 
-/* Prompt box: warning strip feel */
+/* Prompt box */
 .prompt{
   border:2px solid rgba(255,212,0,.95);
-  background: #000;
+  background:#000;
   padding:12px 12px;
   border-radius:var(--radius2);
   color:rgba(255,212,0,.92);
@@ -187,12 +194,12 @@ textarea{resize:vertical; min-height:110px}
   display:flex;
   gap:12px;
   align-items:center;
-  justify-content:center; /* 👈 THIS centers the button */
+  justify-content:center;
   margin-top:14px;
   flex-wrap:wrap;
 }
 
-/* Buttons: HARD, FLAT, NO GRADIENT */
+/* Buttons: YELLOW PRIMARY */
 .btn{
   appearance:none;
   border:none;
@@ -208,6 +215,7 @@ textarea{resize:vertical; min-height:110px}
 .btn:hover{filter:brightness(.98)}
 .btn:active{transform:translateY(1px)}
 
+/* Secondary */
 .btn.ghost{
   background:transparent;
   color:var(--textOnDark);
@@ -215,6 +223,12 @@ textarea{resize:vertical; min-height:110px}
 }
 .btn.ghost:hover{
   border-color:var(--accent);
+}
+
+/* Danger button (optional class for Denied / Delete / etc.) */
+.btn.danger{
+  background:var(--danger);
+  color:#fff;
 }
 
 /* Results */
@@ -233,7 +247,7 @@ textarea{resize:vertical; min-height:110px}
   color:#fff;
 }
 
-/* Mode / radio area (keep, but same aesthetic) */
+/* Mode / radio area */
 .mode{
   display:flex;
   flex-direction:column;
@@ -255,15 +269,22 @@ textarea{resize:vertical; min-height:110px}
 }
 .radio input{width:auto}
 
-/* Footer */
+/* Footer — FIXED for black background */
 .foot{
   display:flex;
   justify-content:space-between;
   gap:10px;
   padding-top:18px;
-  color:rgba(0,0,0,.78);
+  color:rgba(255,212,0,.72);
   font-size:12px;
   font-weight:700;
   opacity:1;
 }
 
+/* Links */
+a{
+  color:rgba(255,212,0,.92);
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+a:hover{color:#fff}
