@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <title>WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Use absolute path + cache buster -->
-  <link rel="stylesheet" href="/style.css?v=wnp10" />
+  <link rel="stylesheet" href="/style.css?v=wnp11" />
 </head>
 
 <body class="wnp">
@@ -21,7 +20,7 @@
       <p class="sub">Membership is not open.<br />It is earned.</p>
     </header>
 
-    <section class="card">
+    <section class="card entry-card">
       <div class="actions">
         <a class="btn" href="member.html">Member Access</a>
       </div>
@@ -40,7 +39,7 @@
     /* Center header to match card */
     .hero-center{
       text-align:center;
-      max-width:680px;         /* match card */
+      max-width:680px;
       margin-left:auto;
       margin-right:auto;
     }
@@ -52,7 +51,7 @@
       gap:4px;
     }
 
-    /* Red accent line (guaranteed) */
+    /* Red accent line (must be in <style>, not body text) */
     .brand-accent{
       display:block;
       width:42px;
@@ -63,7 +62,7 @@
     }
 
     /* Force card narrower on this page */
-    .card{
+    .entry-card{
       max-width:680px;
       margin-left:auto;
       margin-right:auto;
