@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Member Login · WE NOT POOR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/style.css?v=wnp12" />
+</head>
+
+<body class="wnp">
+  <main class="wrap">
+
+    <header class="hero">
+      <div class="brand-wrap">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <h1>LOG IN</h1>
+      <p class="sub">If you were approved, you enter.<br />If you weren’t, the system tells you why.</p>
+    </header>
+
+    <section class="card">
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <span>Email <span class="req">*</span></span>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="you@domain.com" required />
+        </div>
+
+        <div class="field">
+          <span>Password <span class="req">*</span></span>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">ENTER</button>
+          <a class="btn ghost" href="/index.html">Back</a>
+        </div>
+
+        <div id="result" class="result" style="display:none;"></div>
+
+        <div class="below-links" style="margin-top:14px;">
+          <a class="link-item" href="/forgot.html">Forgot password?</a>
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <script>
+    // IMPORTANT:
+    // Update LOGIN_ENDPOINT to match your Worker route.
+    // Examples:
+    //   const LOGIN_ENDPOINT = "/api/auth/login";
+    //   const LOGIN_ENDPOINT = "https://wenotpoor.com/api/auth/login";
+    const LOGIN_ENDPOINT = "/api/auth/login";
+
+    const form = document.getElementById("loginForm");
+    const result = document.getElementById("result");
+
+    function show(msg, isErr=false){
+      result.style.display = "block";
+      result.className = isErr ? "result err" : "result";
+      result.textContent = msg;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        show("Email and password are required.", true);
+        return;
+      }
+
+      try {
+        show("Checking…");
+
+        const res = await fetch(LOGIN_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          // If your API returns a message/reason, show it
+          const msg = data?.error || data?.message || "Login failed.";
+          show(msg, true);
+          return;
+        }
+
+        // Handle status routing:
+        // Expected: data.status in ("active","pending","denied","suspended") etc.
+        const status = (data?.status || "").toLowerCase();
+
+        if (status === "active") {
+          // Approved members go to Member Access (or Oath first depending on your flow)
+          window.location.href = "/member-access.html";
+          return;
+        }
+
+        if (status === "pending") {
+          window.location.href = "/decision.html";
+          return;
+        }
+
+        if (status === "denied") {
+          window.location.href = "/denied.html";
+          return;
+        }
+
+        if (status === "suspended") {
+          show("Account suspended. Check your email for details.", true);
+          return;
+        }
+
+        // Fallback
+        window.location.href = "/decision.html";
+      } catch (err) {
+        show("Network error. Try again.", true);
+      }
+    });
+  </script>
+</body>
+</html>
