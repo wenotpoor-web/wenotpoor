@@ -1,31 +1,35 @@
 :root{
-  --bg:#070707;
-  --panel:#0f0f10;
-  --panel2:#131316;
-  --text:#f3f3f3;
-  --muted:#a9a9ad;
-  --line:#25252a;
-  --accent:#ffd400;
-  --danger:#ff3b3b;
-  --good:#33d17a;
-  --shadow: 0 24px 60px rgba(0,0,0,.55);
-  --radius:18px;
-  --radius2:14px;
-  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  /* WNP CORE */
+  --bg:#FFD400;          /* true yellow */
+  --panel:#000000;       /* command black */
+  --panel2:#0b0b0b;      /* deep black alt */
+  --text:#000000;        /* default on yellow */
+  --textOnDark:#FFD400;  /* text on black */
+  --muted:rgba(0,0,0,.72);
+  --line:rgba(0,0,0,.88);
+  --accent:#FFD400;
+  --danger:#FF2A2A;      /* red consequence */
+  --good:#16c172;        /* only used for “good” indicators */
+  --shadow:none;         /* no glossy SaaS shadows */
+  --radius:16px;
+  --radius2:12px;
+
+  /* Type: hard, clean */
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
+
+/* MAIN BACKGROUND: YELLOW, NO GRADIENTS */
 body.wnp{
   margin:0;
   font-family:var(--font);
   color:var(--text);
-  background:
-    radial-gradient(1200px 600px at 20% 15%, rgba(255,212,0,.18), transparent 60%),
-    radial-gradient(900px 500px at 85% 10%, rgba(255,255,255,.08), transparent 55%),
-    linear-gradient(#050505, #080808);
+  background: var(--bg);
 }
 
+/* Layout stays */
 .wrap{
   width:min(980px, 92vw);
   margin:0 auto;
@@ -33,31 +37,40 @@ body.wnp{
 }
 
 .hero{
-  text-align:center;
+  text-align:left; /* more authoritative than centered */
   margin-bottom:22px;
 }
+
 .brand{
   display:inline-block;
   font-weight:900;
-  letter-spacing:.28em;
-  font-size:14px;
-  opacity:.92;
+  letter-spacing:.18em;
+  font-size:13px;
+  color:rgba(0,0,0,.92);
+  text-transform:uppercase;
 }
+
 .hero h1{
   margin:14px 0 8px;
-  font-size:40px;
-  letter-spacing:.02em;
+  font-size:44px;
+  letter-spacing:.01em;
+  font-weight:900;
+  text-transform:uppercase;
 }
+
 .sub{
-  margin:0 auto;
+  margin:0;
   max-width:60ch;
   color:var(--muted);
   line-height:1.5;
+  font-weight:600;
 }
 
+/* CARDS: BLACK BLOCKS WITH YELLOW/BLACK EDGE */
 .card{
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-  border:1px solid var(--line);
+  background: var(--panel);
+  color: var(--textOnDark);
+  border:2px solid var(--line);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
   padding:18px;
@@ -71,27 +84,33 @@ body.wnp{
   gap:12px;
   margin-bottom:14px;
 }
+
 .card-title{
-  font-weight:800;
-  letter-spacing:.12em;
+  font-weight:900;
+  letter-spacing:.14em;
   font-size:12px;
-  color:rgba(255,255,255,.85);
+  color:rgba(255,212,0,.92);
+  text-transform:uppercase;
 }
 
+/* Pills: minimal, high contrast */
 .pill{
   display:inline-flex;
   align-items:center;
   gap:8px;
   padding:8px 10px;
   border-radius:999px;
-  border:1px solid var(--line);
-  color:var(--muted);
+  border:2px solid rgba(255,212,0,.9);
+  color:rgba(255,212,0,.92);
   font-size:12px;
-  background:rgba(0,0,0,.25);
+  background:transparent;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
 }
 .pill.good{
-  color:rgba(255,255,255,.92);
-  border-color:rgba(51,209,122,.35);
+  border-color:rgba(22,193,114,.85);
+  color:rgba(22,193,114,.95);
 }
 .pill.good::before{
   content:"";
@@ -116,42 +135,54 @@ body.wnp{
   margin:10px 0;
 }
 .field > span{
-  color:rgba(255,255,255,.9);
+  color:rgba(255,212,0,.92);
   font-size:13px;
   letter-spacing:.02em;
+  font-weight:800;
+  text-transform:uppercase;
 }
+
+/* Inputs: black surface, yellow focus, red errors */
 input, textarea{
   width:100%;
   border-radius:var(--radius2);
-  border:1px solid var(--line);
-  background:rgba(0,0,0,.35);
-  color:var(--text);
+  border:2px solid rgba(255,212,0,.65);
+  background: #000;
+  color: var(--textOnDark);
   padding:12px 12px;
   outline:none;
+  font-weight:700;
+}
+input::placeholder, textarea::placeholder{
+  color:rgba(255,212,0,.55);
 }
 input:focus, textarea:focus{
-  border-color:rgba(255,212,0,.55);
-  box-shadow:0 0 0 3px rgba(255,212,0,.10);
+  border-color: var(--accent);
+  box-shadow:none;
 }
 textarea{resize:vertical; min-height:110px}
 
-.muted{color:var(--muted); font-size:12px}
+.muted{color:rgba(255,212,0,.75); font-size:12px}
 .note{
   margin-top:10px;
-  color:var(--muted);
+  color:rgba(255,212,0,.75);
   font-size:13px;
   line-height:1.5;
+  font-weight:600;
 }
 
+/* Prompt box: warning strip feel */
 .prompt{
-  border:1px dashed rgba(255,212,0,.35);
-  background:rgba(255,212,0,.06);
+  border:2px solid rgba(255,212,0,.95);
+  background: #000;
   padding:12px 12px;
   border-radius:var(--radius2);
-  color:rgba(255,255,255,.88);
+  color:rgba(255,212,0,.92);
   line-height:1.35;
+  font-weight:700;
 }
 
+/* Actions */
 .actions{
   display:flex;
   gap:12px;
@@ -160,68 +191,77 @@ textarea{resize:vertical; min-height:110px}
   flex-wrap:wrap;
 }
 
+/* Buttons: HARD, FLAT, NO GRADIENT */
 .btn{
   appearance:none;
   border:none;
   border-radius:14px;
   padding:12px 16px;
-  font-weight:800;
-  letter-spacing:.02em;
+  font-weight:900;
+  letter-spacing:.06em;
   cursor:pointer;
-  color:#111;
-  background:linear-gradient(90deg, var(--accent), #ffe66b);
-  box-shadow:0 10px 26px rgba(255,212,0,.18);
+  color:#000;
+  background: var(--accent);
+  text-transform:uppercase;
 }
-.btn:hover{filter:brightness(1.02)}
+.btn:hover{filter:brightness(.98)}
 .btn:active{transform:translateY(1px)}
 
 .btn.ghost{
   background:transparent;
-  color:rgba(255,255,255,.85);
-  border:1px solid var(--line);
-  box-shadow:none;
+  color:var(--textOnDark);
+  border:2px solid rgba(255,212,0,.85);
 }
-.btn.ghost:hover{border-color:rgba(255,212,0,.45); color:#fff}
+.btn.ghost:hover{
+  border-color:var(--accent);
+}
 
+/* Results */
 .result{
   margin:14px 0 0;
   padding:12px;
   border-radius:14px;
-  border:1px solid var(--line);
-  background:rgba(0,0,0,.28);
-  color:rgba(255,255,255,.88);
+  border:2px solid rgba(255,212,0,.55);
+  background:#000;
+  color:rgba(255,212,0,.92);
   overflow:auto;
+  font-weight:700;
 }
 .result.err{
-  border-color:rgba(255,59,59,.35);
-  box-shadow:0 0 0 3px rgba(255,59,59,.08);
-  color:#ffd9d9;
+  border-color:rgba(255,42,42,.95);
+  color:#fff;
 }
 
+/* Mode / radio area (keep, but same aesthetic) */
 .mode{
   display:flex;
   flex-direction:column;
   gap:10px;
   padding:10px 12px;
-  border:1px solid var(--line);
+  border:2px solid rgba(255,212,0,.55);
   border-radius:var(--radius2);
-  background:rgba(0,0,0,.25);
+  background:#000;
 }
 .radio{
   display:flex;
   align-items:center;
   gap:10px;
-  color:rgba(255,255,255,.9);
+  color:rgba(255,212,0,.92);
   font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
 }
 .radio input{width:auto}
 
+/* Footer */
 .foot{
   display:flex;
   justify-content:space-between;
   gap:10px;
   padding-top:18px;
-  color:rgba(255,255,255,.72);
+  color:rgba(0,0,0,.78);
   font-size:12px;
-  opacity:.9;
+  font-weight:700;
+  opacity:1;
 }
