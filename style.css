@@ -246,7 +246,12 @@ textarea{resize:vertical; min-height:110px}
   border-color:rgba(255,42,42,.95);
   color:#fff;
 }
-
+.req{
+  color:var(--danger);
+  font-style:normal;
+  margin-left:4px;
+  font-weight:900;
+}
 /* Mode / radio area */
 .mode{
   display:flex;
