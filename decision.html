@@ -13,7 +13,12 @@
   <div class="wrap">
 
     <div class="hero">
-      <span class="brand">WE NOT POOR</span>
+      <!-- ✅ Brand with red accent line under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
       <h1>Check Status</h1>
       <p class="sub">Log in to view your current status.</p>
     </div>
@@ -71,30 +76,40 @@
     /* Make the input wells proportionate (not full-width) */
     .status-login-row .field{
       width: 100%;
-      max-width: 520px;     /* ⬅ adjust here if you want slightly wider/narrower */
+      max-width: 520px;
       margin-left: auto;
       margin-right: auto;
     }
 
-    /* Ensure inputs follow the field width */
-    .status-login-row input{
-      width: 100%;
-    }
+    .status-login-row input{ width: 100%; }
 
-    /* Keep the login button centered */
-    .status-login-row .actions{
-      justify-content: center;
-    }
+    .status-login-row .actions{ justify-content: center; }
 
-    /* Footer: center it and remove right-side second item */
     .foot-center{
       justify-content: center !important;
       text-align: center;
     }
+
+    /* ✅ Red accent line under WE NOT (left-aligned under WE NOT) */
+    .brand-wrap{
+      display: inline-flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .brand-offset{ align-items: flex-start; }
+
+    .brand-accent{
+      display:block;
+      width:36px;             /* smaller than the word */
+      height:3px;
+      background: var(--danger, #FF2A2A);
+      border-radius: 999px;
+      margin-left: 2px;       /* optical alignment under WE NOT */
+    }
   </style>
 
   <script>
-    const API_BASE = ""; // same domain; adjust only if your API is on a different host
+    const API_BASE = "";
     const $ = (id) => document.getElementById(id);
 
     const showMsg = (t="") => {
