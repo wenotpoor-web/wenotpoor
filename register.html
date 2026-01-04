@@ -2,24 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register Copy</title>
+  <title>Register Your Copy · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
-<body>
-  <main>
-    <h1>REGISTER YOUR COPY</h1>
-    <div class="divider"></div>
 
-    <p class="sub">This is where most people stop.</p>
+<body class="wnp">
 
-    <div class="panel">
-  <label class="label" for="code">BOOK CODE</label>
-  <input id="code" class="input center" type="text" placeholder="WNP-XXXX-XXXX" />
-  <a class="btn block" href="checkpoint.html">CONTINUE</a>
-</div>
+  <!-- Top-right utility link -->
+  <a href="index.html" class="top-login">
+    <span>Back to Home</span>
+  </a>
 
-    <p class="fine">One copy. One entry. Not transferable.</p>
+  <main class="wrap">
+
+    <header class="hero">
+      <!-- Brand with red accent under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <h1>REGISTER YOUR COPY</h1>
+      <p class="sub">
+        This is the point where commitment replaces curiosity.
+      </p>
+    </header>
+
+    <section class="card">
+
+      <div class="field">
+        <span>Book Code <span class="req">*</span></span>
+        <input
+          id="code"
+          type="text"
+          placeholder="WNP-XXXX-XXXX"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="actions" style="flex-direction:column; gap:12px;">
+        <a class="btn" href="checkpoint.html">CONTINUE</a>
+        <a class="btn ghost" href="member.html">BACK</a>
+      </div>
+
+      <p class="note" style="text-align:center; margin-top:14px;">
+        One copy. One entry. Not transferable.
+      </p>
+
+    </section>
+
   </main>
+
 </body>
 </html>
