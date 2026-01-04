@@ -298,3 +298,17 @@ a{
   text-underline-offset:3px;
 }
 a:hover{color:#fff}
+
+/* REQUIRED MARK — FORCE RED ALWAYS */
+.req,
+.field .req,
+label .req,
+span .req{
+  color: var(--danger) !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  margin-left: 4px;
+  line-height: 1;
+  display: inline-block;
+  transform: translateY(-1px);
+}
