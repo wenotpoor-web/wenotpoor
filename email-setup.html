@@ -4,19 +4,23 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>We Not Poor — Email & Password</title>
-  <link rel="stylesheet" href="/style.css" />
+
+  <!-- APPLY SITE THEME -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body class="wnp">
   <main class="wrap">
+
     <header class="hero">
-      <div class="brand">WE NOT POOR</div>
+      <span class="brand">WE NOT POOR</span>
       <h1>Email & Password Setup</h1>
       <p class="sub">
         Confirm your email. We’ll send a temporary password. Then you’ll set your permanent password.
       </p>
     </header>
 
+    <!-- STEP 1 -->
     <section class="card">
       <div class="card-h">
         <div class="card-title">STEP 1 — CONFIRM EMAIL</div>
@@ -24,27 +28,30 @@
       </div>
 
       <div class="grid-2">
-        <label class="field">
+        <div class="field">
           <span>Email</span>
           <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-        </label>
+        </div>
 
-        <label class="field">
+        <div class="field">
           <span>Confirm Email</span>
           <input id="email2" type="email" placeholder="retype email" autocomplete="email" />
-        </label>
+        </div>
       </div>
 
       <div class="actions">
-        <button class="btn" id="sendTemp">Send temporary password</button>
+        <button class="btn" id="sendTemp" type="button">Send temporary password</button>
         <button class="btn ghost" id="resetAll" type="button">Reset</button>
       </div>
 
       <div class="note">
         Temporary passwords look like: <b>Discipline243</b>, <b>Clarity087</b>, etc.
       </div>
+
+      <div class="result err" id="step1Err" style="display:none;"></div>
     </section>
 
+    <!-- STEP 2 -->
     <section class="card">
       <div class="card-h">
         <div class="card-title">STEP 2 — SET PASSWORD</div>
@@ -52,21 +59,24 @@
       </div>
 
       <div class="grid-2">
-        <label class="field">
+        <div class="field">
           <span>Temporary Password</span>
           <input id="temp" type="text" placeholder="Discipline243" />
-        </label>
+        </div>
 
-        <label class="field">
+        <div class="field">
           <span>New Password</span>
           <input id="pw" type="password" placeholder="••••••••" autocomplete="new-password" />
-        </label>
+        </div>
 
-        <label class="field">
+        <div class="field">
           <span>Confirm New Password</span>
           <input id="pw2" type="password" placeholder="••••••••" autocomplete="new-password" />
-        </label>
+        </div>
 
+        <!-- NOTE: Mode UI remains for now because your script uses it.
+             If you are removing mode selection from this page later,
+             we’ll switch the script to read the path from sessionStorage instead. -->
         <div class="field">
           <span>Mode</span>
           <div class="mode">
@@ -83,7 +93,7 @@
       </div>
 
       <div class="actions">
-        <button class="btn" id="confirmPw">Set password & continue</button>
+        <button class="btn" id="confirmPw" type="button">Set password & continue</button>
       </div>
 
       <pre class="result" id="result">Waiting…</pre>
@@ -106,13 +116,19 @@
       result.classList.toggle("err", !!isErr);
     }
 
+    function setStep1Err(msg="") {
+      const el = $("step1Err");
+      if (!msg) { el.style.display = "none"; el.textContent = ""; return; }
+      el.style.display = "block";
+      el.textContent = msg;
+    }
+
     function modeValue() {
       const sel = document.querySelector('input[name="mode"]:checked');
       return sel ? sel.value : "manual";
     }
 
     function pullCarryover() {
-      // manual-submit stores payload here
       const raw = sessionStorage.getItem("wnp_payload");
       if (!raw) return null;
       try { return JSON.parse(raw); } catch { return null; }
@@ -135,15 +151,17 @@
     $("resetAll").onclick = () => {
       ["email","email2","temp","pw","pw2"].forEach(id => $(id).value = "");
       sessionStorage.removeItem("wnp_payload");
+      setStep1Err("");
       setResult("Reset.");
     };
 
     $("sendTemp").onclick = async () => {
+      setStep1Err("");
       const email = $("email").value.trim();
       const email2 = $("email2").value.trim();
 
-      if (!email || !email2) return setResult("Enter email twice.", true);
-      if (email !== email2) return setResult("Emails do not match.", true);
+      if (!email || !email2) { setStep1Err("Enter email twice."); return setResult("Enter email twice.", true); }
+      if (email !== email2) { setStep1Err("Emails do not match."); return setResult("Emails do not match.", true); }
 
       setResult("Sending temporary password…");
 
@@ -160,7 +178,10 @@
       });
 
       const data = await r.json().catch(() => ({}));
-      if (!r.ok) return setResult(data.error || "Failed to send temp password.", true);
+      if (!r.ok) {
+        setStep1Err(data.error || "Failed to send temp password.");
+        return setResult(data.error || "Failed to send temp password.", true);
+      }
 
       setResult("Temporary password sent. Check your inbox (and spam).");
     };
@@ -184,7 +205,6 @@
 
       setResult("Setting password…");
 
-      // include any staged uploads/answer from previous screen
       const staged = pullCarryover() || {};
       const r = await fetch(API + "/api/auth/temp-password/confirm", {
         method: "POST",
@@ -202,12 +222,12 @@
       const data = await r.json().catch(() => ({}));
       if (!r.ok) return setResult(data.error || "Failed to set password.", true);
 
-      // routing based on mode + status
       sessionStorage.removeItem("wnp_payload");
 
+      // ROUTING (use your real filenames)
       if (mode === "manual") {
         // oath is locked until approved
-        window.location.href = "/pending.html";
+        window.location.href = "/decision.html";
       } else {
         // auto path goes to oath next
         window.location.href = "/oath.html";
