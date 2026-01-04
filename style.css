@@ -187,6 +187,7 @@ textarea{resize:vertical; min-height:110px}
   display:flex;
   gap:12px;
   align-items:center;
+  justify-content:center; /* 👈 THIS centers the button */
   margin-top:14px;
   flex-wrap:wrap;
 }
