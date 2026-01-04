@@ -9,10 +9,18 @@
 
 <body class="wnp">
   <main class="wrap">
+
     <header class="hero">
-      <span class="brand">WE NOT POOR</span>
+      <div class="brand-wrap">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent"></span>
+      </div>
+
       <h1>CHECKPOINT</h1>
-      <p class="sub">You are not here because you read.<br />You are here because you acted.</p>
+      <p class="sub">
+        You are not here because you read.<br />
+        You are here because you acted.
+      </p>
     </header>
 
     <section class="card">
@@ -21,11 +29,10 @@
         <div class="pill">Required</div>
       </div>
 
-      <!-- Red accent bar (consequence marker) -->
-      <div class="accent-danger" role="note" aria-label="Warning"></div>
-
-      <p class="note" style="margin-top:10px;">
-        <strong style="color:var(--danger);">This submission cannot be undone.</strong>
+      <p class="note">
+        <strong style="color:var(--danger);">
+          This submission cannot be undone.
+        </strong>
       </p>
 
       <div class="field">
@@ -37,7 +44,11 @@
       <div class="field">
         <span>One question</span>
         <div class="muted">500 characters. No stories. No excuses.</div>
-        <textarea id="q" maxlength="500" placeholder="What lie have you been telling yourself that this book exposed?"></textarea>
+        <textarea
+          id="q"
+          maxlength="500"
+          placeholder="What lie have you been telling yourself that this book exposed?"
+        ></textarea>
       </div>
 
       <label class="radio" style="text-transform:none; letter-spacing:0; font-weight:800;">
@@ -51,15 +62,21 @@
     </section>
   </main>
 
-  <!-- Page-specific helper styles (safe + minimal) -->
+  <!-- Minimal page-specific styling -->
   <style>
-    /* Red accent bar — thin, intentional, not decorative */
-    .accent-danger{
-      height: 6px;
-      width: 100%;
-      background: var(--danger);
-      border-radius: 999px;
-      margin: 6px 0 2px;
+    .brand-wrap{
+      display:inline-flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:4px;
+    }
+
+    /* Subtle red authority mark */
+    .brand-accent{
+      width:42px;               /* intentionally shorter than text */
+      height:3px;
+      background:var(--danger);
+      border-radius:999px;
     }
   </style>
 </body>
