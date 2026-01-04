@@ -12,13 +12,12 @@
 <body class="wnp">
   <div class="wrap">
 
-    <!-- 🔹 Top-right Back to Home link -->
-    <a href="https://www.wenotpoor.com/index.html" class="top-home-link">
-      Back to Home
+    <!-- ✅ Top-right Back to Home link (uses existing CSS .top-login) -->
+    <a class="top-login" href="https://www.wenotpoor.com/index.html">
+      <span>Back to Home</span>
     </a>
 
     <div class="hero">
-      <!-- ✅ Brand with red accent line under WE NOT -->
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -69,13 +68,96 @@
       </div>
     </div>
 
-    <!-- ✅ Footer: centered single line only -->
     <div class="foot foot-center">
       <span>Membership is not open. It is earned.</span>
     </div>
 
   </div>
 
-  <!-- scripts unchanged -->
+  <script>
+    const API_BASE = "";
+    const $ = (id) => document.getElementById(id);
+
+    const showMsg = (t="") => {
+      const el = $("msg");
+      if (!t) { el.style.display = "none"; el.textContent = ""; return; }
+      el.style.display = "block";
+      el.textContent = t;
+    };
+
+    function setPill(text, variant) {
+      const pill = $("statusPill");
+      pill.style.display = "inline-flex";
+      pill.className = "pill" + (variant ? ` ${variant}` : "");
+      pill.textContent = text;
+    }
+
+    function showStatus(status, reason) {
+      $("statusCard").style.display = "block";
+      $("deniedReasonWrap").style.display = "none";
+      $("enterBtn").style.display = "none";
+
+      if (status === "pending") {
+        setPill("PENDING");
+        $("statusTitle").textContent = "Pending Activation";
+        $("statusText").textContent = "Your submission is under review. Access is granted only after approval.";
+      } else if (status === "approved") {
+        setPill("APPROVED", "good");
+        $("statusTitle").textContent = "Approved";
+        $("statusText").textContent = "You’re approved. Select ENTER to continue to the Oath.";
+        $("enterBtn").style.display = "inline-block";
+      } else if (status === "auto_approved") {
+        setPill("APPROVED", "good");
+        $("statusTitle").textContent = "Approved";
+        $("statusText").textContent = "Continue to the Oath.";
+        $("enterBtn").style.display = "inline-block";
+      } else if (status === "denied") {
+        setPill("DENIED");
+        $("statusTitle").textContent = "Denied";
+        $("statusText").textContent = "Your request was denied.";
+        $("deniedReasonWrap").style.display = "block";
+        $("deniedReason").textContent = reason ? `Reason: ${reason}` : "Reason: (not provided)";
+      } else if (status === "active") {
+        setPill("ACTIVE", "good");
+        $("statusTitle").textContent = "Active";
+        $("statusText").textContent = "You already have access. Redirecting…";
+        setTimeout(() => location.href = "/member.html", 600);
+      } else {
+        setPill(String(status || "UNKNOWN"));
+        $("statusTitle").textContent = "Status";
+        $("statusText").textContent = `Current status: ${status}`;
+      }
+    }
+
+    $("loginBtn").addEventListener("click", async () => {
+      showMsg("");
+      const email = $("email").value.trim().toLowerCase();
+      const password = $("password").value;
+
+      if (!email || !password) return showMsg("Email and password are required.");
+
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (data && data.status === "denied") {
+          showStatus("denied", data.reason);
+          return;
+        }
+        return showMsg(data.error || "Login failed.");
+      }
+
+      showStatus(data.status, data.reason);
+    });
+
+    $("enterBtn").addEventListener("click", () => {
+      location.href = "/oath.html";
+    });
+  </script>
 </body>
 </html>
