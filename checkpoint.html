@@ -24,26 +24,20 @@
     </header>
 
     <section class="card">
-      <div class="card-h">
-        <div class="card-title">Submission</div>
-        <div class="pill">Required</div>
-      </div>
-
-      <p class="note">
-        <strong style="color:var(--danger);">
-          This submission cannot be undone.
-        </strong>
-      </p>
 
       <div class="field">
         <span>Upload proof</span>
-        <div class="muted">A photo of a completed checkpoint page (handwritten).</div>
+        <div class="muted">
+          A photo of a completed checkpoint page (handwritten).
+        </div>
         <input type="file" />
       </div>
 
       <div class="field">
-        <span>One question</span>
-        <div class="muted">500 characters. No stories. No excuses.</div>
+        <span>Why this moment matters</span>
+        <div class="muted">
+          This question forces you to confront the lie that kept you stuck.
+        </div>
         <textarea
           id="q"
           maxlength="500"
@@ -53,7 +47,7 @@
 
       <label class="radio" style="text-transform:none; letter-spacing:0; font-weight:800;">
         <input type="checkbox" />
-        I understand this submission cannot be undone or deleted.
+        I understand this checkpoint is a line I cannot step back over.
       </label>
 
       <div class="actions">
@@ -73,7 +67,7 @@
 
     /* Subtle red authority mark */
     .brand-accent{
-      width:42px;               /* intentionally shorter than text */
+      width:42px;
       height:3px;
       background:var(--danger);
       border-radius:999px;
