@@ -11,7 +11,7 @@
   <main class="wrap">
 
     <header class="hero hero-center">
-      <div class="brand-wrap brand-center">
+      <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
       </div>
@@ -36,39 +36,45 @@
   </main>
 
   <style>
-    /* Center header to match card */
+    /* Lock proportions: header + card aligned */
     .hero-center{
       text-align:center;
-      max-width:680px;
+      max-width:640px;
       margin-left:auto;
       margin-right:auto;
     }
 
+    /* Brand block stays centered as a unit */
     .brand-wrap{
       display:inline-flex;
       flex-direction:column;
-      align-items:center;
       gap:4px;
     }
 
-    /* Red accent line (must be in <style>, not body text) */
-    .brand-accent{
+    /* Accent sits under “WE NOT” (left) while the whole brand remains centered */
+    .brand-offset{
+      align-items:flex-start;
+    }
+
+    .brand-offset .brand-accent{
       display:block;
-      width:42px;
+      width:36px;
       height:3px;
       background:var(--danger);
       border-radius:999px;
-      margin:0 auto;
+      margin:0;          /* remove centering */
+      margin-left:2px;   /* optical alignment */
     }
 
-    /* Force card narrower on this page */
+    /* Proportionate card */
     .entry-card{
-      max-width:680px;
+      width:100%;
+      max-width:640px;
       margin-left:auto;
       margin-right:auto;
     }
 
-    /* Links below primary button */
+    /* Links under button */
     .below-links{
       margin-top:18px;
       display:flex;
