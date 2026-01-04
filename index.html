@@ -8,6 +8,12 @@
 </head>
 
 <body class="wnp">
+
+  <!-- Top-right utility login link -->
+  <a href="member.html" class="top-login">
+    Already a member? <span>Log in</span>
+  </a>
+
   <main class="wrap">
 
     <header class="hero hero-center">
@@ -62,8 +68,8 @@
       height:3px;
       background:var(--danger);
       border-radius:999px;
-      margin:0;          /* remove centering */
-      margin-left:2px;   /* optical alignment */
+      margin:0;
+      margin-left:2px;
     }
 
     /* Proportionate card */
@@ -90,6 +96,27 @@
       letter-spacing:.02em;
     }
     .link-item:hover{color:#fff}
+
+    /* Top-right utility login link */
+    .top-login{
+      position:fixed;
+      top:16px;
+      right:18px;
+      font-size:12px;
+      font-weight:700;
+      color:rgba(255,255,255,.55);
+      text-decoration:none;
+      letter-spacing:.02em;
+      z-index:1000;
+    }
+    .top-login span{
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+    .top-login:hover{
+      color:#fff;
+    }
   </style>
+
 </body>
 </html>
