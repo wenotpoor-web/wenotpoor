@@ -4,64 +4,67 @@
   <meta charset="UTF-8" />
   <title>WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <!-- Use absolute path + cache buster -->
+  <link rel="stylesheet" href="/style.css?v=wnp10" />
 </head>
 
 <body class="wnp">
   <main class="wrap">
 
-    <!-- Header styled like Checkpoint page -->
     <header class="hero hero-center">
       <div class="brand-wrap brand-center">
         <span class="brand">WE NOT POOR</span>
-        <span class="brand-accent"></span>
+        <span class="brand-accent" aria-hidden="true"></span>
       </div>
-      
-   /* Subtle red authority mark */
-    .brand-accent{
-      width:42px;
-      height:3px;
-      background:var(--danger);
-      border-radius:999px;
-    }
-      
+
       <h1>MEMBERSHIP</h1>
       <p class="sub">Membership is not open.<br />It is earned.</p>
     </header>
 
-    <!-- Main panel -->
     <section class="card">
-
       <div class="actions">
-        <!-- Primary action as BUTTON -->
         <a class="btn" href="member.html">Member Access</a>
       </div>
 
-      <!-- Secondary links BELOW the button -->
       <div class="below-links">
         <a class="link-item" href="decision.html">Check Approval Status</a>
         <a class="link-item" href="https://YOUR-DIRECT-PURCHASE-LINK.com" target="_blank" rel="noopener">
           Buy Direct Copy (Includes Book Code)
         </a>
       </div>
-
     </section>
 
   </main>
 
-  <!-- Minimal additions to match screenshot + link styling -->
   <style>
-    /* Center everything like the screenshot */
+    /* Center header to match card */
     .hero-center{
       text-align:center;
-      max-width:760px;
+      max-width:680px;         /* match card */
       margin-left:auto;
       margin-right:auto;
     }
-    .brand-center{
+
+    .brand-wrap{
+      display:inline-flex;
+      flex-direction:column;
       align-items:center;
+      gap:4px;
     }
-    .brand-center .brand-accent{
+
+    /* Red accent line (guaranteed) */
+    .brand-accent{
+      display:block;
+      width:42px;
+      height:3px;
+      background:var(--danger);
+      border-radius:999px;
+      margin:0 auto;
+    }
+
+    /* Force card narrower on this page */
+    .card{
+      max-width:680px;
       margin-left:auto;
       margin-right:auto;
     }
