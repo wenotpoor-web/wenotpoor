@@ -3,13 +3,16 @@
   --bg:#000000;
   --panel:#0b0b0b;
   --panel2:#000000;
+
   --text:#FFD400;
   --textOnDark:#FFD400;
   --muted:rgba(255,212,0,.72);
+
   --line:rgba(255,212,0,.72);
   --accent:#FFD400;
   --danger:#FF2A2A;
   --good:#16c172;
+
   --shadow:none;
   --radius:16px;
   --radius2:12px;
@@ -21,11 +24,17 @@
 html,body{height:100%}
 
 /* MAIN BACKGROUND */
+html,body{
+  background:#000 !important;
+  background-image:none !important;
+}
 body.wnp{
   margin:0;
   font-family:var(--font);
   color:var(--text);
   background:#000 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Layout */
@@ -61,7 +70,7 @@ body.wnp{
   align-items:center;
 }
 
-/* OFFSET VERSION (Membership / index) */
+/* OFFSET VERSION (Membership / index / decision when used) */
 .brand-offset{
   align-items:flex-start;
 }
@@ -87,6 +96,7 @@ body.wnp{
   max-width:60ch;
   color:var(--muted);
   font-weight:600;
+  line-height:1.5;
 }
 
 /* CARD — SINGLE SOURCE OF TRUTH */
@@ -101,11 +111,58 @@ body.wnp{
   border-radius:var(--radius);
 }
 
+/* FORM FIELDS (used across decision/login/checkpoint) */
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin:16px 0;
+}
+
+.field > span{
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  font-size:13px;
+}
+
+/* INPUTS — master look (desktop + mobile consistent) */
+input, textarea, select{
+  width:100%;
+  border-radius:18px;
+  border:2px solid rgba(255,212,0,.75);
+  background-color:#000;
+  color:var(--textOnDark);
+  padding:14px 18px;
+  outline:none;
+  font-weight:700;
+  -webkit-appearance:none; /* iOS */
+  appearance:none;
+}
+
+textarea{
+  min-height:110px;
+  resize:vertical;
+}
+
+input:focus, textarea:focus, select:focus{
+  border-color:var(--accent);
+}
+
+/* REQUIRED ASTERISK */
+.req{
+  color:var(--danger) !important;
+  font-weight:900;
+}
+
 /* ACTIONS */
 .actions{
   display:flex;
   justify-content:center;
+  align-items:center;
+  gap:12px;
   margin-top:14px;
+  flex-wrap:wrap;
 }
 
 /* BUTTONS */
@@ -119,15 +176,25 @@ body.wnp{
   color:#000;
   background:var(--accent);
   text-transform:uppercase;
+
+  /* Center label perfectly everywhere */
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  line-height:1;
 }
 
-/* LINKS */
-a{
-  color:rgba(255,212,0,.92);
-  text-decoration:underline;
-  text-underline-offset:3px;
+.btn:hover{filter:brightness(.98)}
+.btn:active{transform:translateY(1px)}
+
+/* Ghost button */
+.btn.ghost{
+  background:transparent;
+  color:var(--textOnDark);
+  border:2px solid rgba(255,212,0,.85);
 }
-a:hover{color:#fff}
+.btn.ghost:hover{border-color:var(--accent)}
 
 /* BELOW LINKS */
 .below-links{
@@ -138,10 +205,43 @@ a:hover{color:#fff}
   text-align:center;
 }
 
-/* REQUIRED ASTERISK */
-.req{
-  color:var(--danger) !important;
-  font-weight:900;
+/* LINKS */
+a{
+  color:rgba(255,212,0,.92);
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+a:hover{color:#fff}
+
+/* RESULTS (errors / messages) */
+.result{
+  margin:14px 0 0;
+  padding:12px;
+  border-radius:14px;
+  border:2px solid rgba(255,212,0,.55);
+  background:#000;
+  color:rgba(255,212,0,.92);
+  overflow:auto;
+  font-weight:700;
+}
+.result.err{
+  border-color:rgba(255,42,42,.95);
+  color:#fff;
+}
+
+/* FOOTER */
+.foot{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding-top:18px;
+  color:rgba(255,212,0,.72);
+  font-size:12px;
+  font-weight:700;
+}
+.foot.foot-center{
+  justify-content:center;
+  text-align:center;
 }
 
 /* TOP-RIGHT LOGIN LINK */
@@ -155,7 +255,61 @@ a:hover{color:#fff}
   text-decoration:none;
   z-index:1000;
 }
-.top-login span{
-  text-decoration:underline;
+.top-login span{ text-decoration:underline; }
+.top-login:hover{ color:#fff; }
+
+/* =========================
+   MOBILE FIXES + SAFARi FIXES
+   ========================= */
+
+/* Force dark inputs on mobile (prevents white fields) */
+input, textarea, select{
+  background-color:#000 !important;
+  color:var(--textOnDark) !important;
 }
-.top-login:hover{color:#fff}
+
+/* Kill iOS autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus{
+  -webkit-text-fill-color: var(--textOnDark) !important;
+  -webkit-box-shadow: 0 0 0px 1000px #000 inset !important;
+  box-shadow: 0 0 0px 1000px #000 inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Mobile layout tuning */
+@media (max-width: 520px){
+  .wrap{ padding:28px 0 40px; }
+
+  .hero{ margin-bottom:18px; }
+
+  .hero h1{
+    font-size:34px;
+    line-height:1.05;
+  }
+
+  .card{
+    padding:16px;
+  }
+
+  /* Buttons become tap-friendly */
+  .btn{
+    width:100%;
+    max-width:360px;
+  }
+
+  /* Prevent fixed link from covering content */
+  .top-login{
+    position:absolute;
+    top:10px;
+    right:10px;
+    font-size:11px;
+  }
+}
