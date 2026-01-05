@@ -31,7 +31,8 @@
 
     <section class="card">
 
-      <div class="field">
+      <!-- ✅ Proportionate Book Code field -->
+      <div class="field book-code-field">
         <span>Book Code <span class="req">*</span></span>
         <input
           id="code"
@@ -53,6 +54,23 @@
     </section>
 
   </main>
+
+  <!-- ✅ Page-specific width control (safe, isolated) -->
+  <style>
+    /* Desktop: intentional, not stretched */
+    .book-code-field{
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Mobile: full-width for usability */
+    @media (max-width: 520px){
+      .book-code-field{
+        max-width: 100%;
+      }
+    }
+  </style>
 
 </body>
 </html>
