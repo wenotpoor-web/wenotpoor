@@ -51,7 +51,7 @@
       line-height:1;
     }
     .brand-accent{
-      width:92px;         /* red line under “WE NOT” vibe */
+      width:92px;
       height:4px;
       background:var(--danger);
       border-radius:999px;
@@ -144,7 +144,7 @@
       height:100%;
       object-fit:cover;
       display:block;
-      cursor:pointer;
+      cursor:zoom-in;
     }
 
     .cover-badge{
@@ -177,7 +177,7 @@
       color:var(--text);
       line-height:1.55;
       font-size:15.5px;
-      max-width: 46ch;
+      max-width: 54ch;
     }
 
     .meta{
@@ -256,6 +256,77 @@
       opacity:.9;
     }
 
+    /* Lightbox (click cover to view larger) */
+    .lightbox{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.86);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:9999;
+    }
+    .lightbox.open{ display:flex; }
+
+    .lightbox-card{
+      width:min(92vw, 820px);
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,212,0,.25);
+      background:linear-gradient(180deg, #0b0b0b 0%, #060606 100%);
+      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;
+      position:relative;
+    }
+    .lightbox-top{
+      height:6px;
+      background:var(--danger);
+      opacity:.9;
+    }
+    .lightbox-inner{
+      padding:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .lightbox-inner img{
+      width:100%;
+      height:auto;
+      max-height:80vh;
+      object-fit:contain;
+      display:block;
+      cursor:zoom-out;
+      border-radius:12px;
+      background:#000;
+    }
+    .lightbox-close{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      border:1px solid rgba(255,212,0,.35);
+      background:rgba(0,0,0,.55);
+      color:var(--yellow);
+      cursor:pointer;
+      font-size:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .lightbox-close:hover{
+      background:rgba(255,212,0,.08);
+      border-color:rgba(255,212,0,.6);
+    }
+    .lightbox-caption{
+      padding:0 14px 14px 14px;
+      color:rgba(255,255,255,.75);
+      font-size:12.5px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
     /* Responsive */
     @media (max-width: 860px){
       .hero{ text-align:center; }
@@ -282,10 +353,8 @@
         <span class="brand-accent" aria-hidden="true"></span>
       </div>
 
-      <!-- “Checkpoint” replaced -->
       <h1>Buy the Book</h1>
 
-      <!-- Two lines replaced -->
       <p class="sub">
         Order your paperback copy and we’ll ship it to your door.<br />
         Use the arrows to view the front and back cover before checkout.
@@ -300,7 +369,7 @@
         <div class="book">
           <button class="nav-btn" id="prevCover" type="button" aria-label="Previous cover">&#9664;</button>
 
-          <div class="cover-frame" aria-live="polite" title="Click cover to toggle">
+          <div class="cover-frame" aria-live="polite" title="Click cover to view larger">
             <img id="coverImg" src="/images/front_final.png" alt="Front cover of the book" />
             <span class="cover-badge" id="coverLabel">Front</span>
           </div>
@@ -313,18 +382,17 @@
           <h2 class="title">DO NOT READ THIS IF YOU WANT TO STAY POOR</h2>
 
           <p class="desc">
-            This is not motivation. This is not comfort.
-            This book is a confrontation with the habits, excuses,
-            and thinking patterns that keep people stuck.
+            This is not motivation. This is not comfort. This is a mirror.
+            Read it with your guard down and a pen in your hand. The real work happens in the worksheets —
+            the checkpoints you write, the excuses you expose, the decisions you tighten. If you just read,
+            you’ll get a spark. If you participate, you’ll get a shift.
           </p>
 
           <p class="meta">Paperback. Ships directly to your address.</p>
 
           <div class="actions">
-            <!-- Button uses quantity value to build a simple query param you can read later if needed -->
             <a class="btn" id="buyBtn" href="https://buy.stripe.com/YOUR_LINK_HERE">Buy Now</a>
 
-            <!-- Quantity selector (NOTE: Payment Link can also handle qty. This is UI for your page.) -->
             <div class="qty" aria-label="Quantity selector">
               <label for="qty">Quantity</label>
               <select id="qty" name="qty">
@@ -338,12 +406,24 @@
               <span class="chev">▼</span>
             </div>
 
-            <span class="hint">Tip: Click the cover to flip front/back.</span>
+            <span class="hint">Tip: Click the cover to view it larger.</span>
           </div>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Cover preview">
+    <div class="lightbox-card" role="document">
+      <div class="lightbox-top" aria-hidden="true"></div>
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Close preview">✕</button>
+      <div class="lightbox-inner">
+        <img id="lightboxImg" src="" alt="Book cover preview" />
+      </div>
+      <div class="lightbox-caption" id="lightboxCaption">Cover</div>
+    </div>
+  </div>
 
   <script>
     // Front/back cover toggle
@@ -362,6 +442,12 @@
     const qty = document.getElementById("qty");
     const buyBtn = document.getElementById("buyBtn");
 
+    // Lightbox
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const lightboxClose = document.getElementById("lightboxClose");
+
     function render() {
       img.src = covers[idx].src;
       img.alt = covers[idx].alt;
@@ -375,7 +461,37 @@
 
     prev.addEventListener("click", () => go(-1));
     next.addEventListener("click", () => go(1));
-    img.addEventListener("click", () => go(1));
+
+    // Open lightbox with current cover (click on cover)
+    function openLightbox() {
+      lightboxImg.src = covers[idx].src;
+      lightboxImg.alt = covers[idx].alt;
+      lightboxCaption.textContent = covers[idx].label + " Cover";
+      lightbox.classList.add("open");
+      lightbox.setAttribute("aria-hidden", "false");
+      // Prevent background scroll while open
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+      lightbox.setAttribute("aria-hidden", "true");
+      lightboxImg.src = "";
+      document.body.style.overflow = "";
+    }
+
+    // Clicking the cover opens larger preview (instead of flipping)
+    img.addEventListener("click", openLightbox);
+
+    // Close behaviors
+    lightboxClose.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (e) => {
+      // Click outside the card closes
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && lightbox.classList.contains("open")) closeLightbox();
+    });
 
     // Quantity selector behavior:
     // If your Stripe Payment Link has "Adjustable quantity" enabled, the customer can set qty in Checkout.
@@ -383,13 +499,14 @@
     const baseHref = buyBtn.getAttribute("href");
     function updateBuyLink(){
       const q = qty.value || "1";
-      // Append ?qty= to your Stripe link for tracking (Stripe ignores unknown params safely).
-      // If your Stripe link already has params, we add with &
       const joiner = baseHref.includes("?") ? "&" : "?";
       buyBtn.setAttribute("href", baseHref + joiner + "qty=" + encodeURIComponent(q));
     }
     qty.addEventListener("change", updateBuyLink);
     updateBuyLink();
+
+    // Initial render
+    render();
   </script>
 </body>
 </html>
