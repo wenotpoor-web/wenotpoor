@@ -2,39 +2,154 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Oath</title>
+  <title>Oath · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <main>
-    <h1>READ THIS CAREFULLY</h1>
-    <div class="divider"></div>
 
-<div class="panel oath">
-  <p class="oath-text">
-    I am not poor in resources.<br />
-    I am poor only where I lack discipline.<br /><br />
+<body class="wnp">
+  <main class="wrap">
 
-    I will not confuse comfort with safety.<br />
-    I will not confuse movement with progress.<br />
-    I will not wait to be rescued.<br /><br />
+    <header class="hero">
+      <!-- Brand with red accent under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
 
-    My results are my responsibility.<br />
-    No explanation will save me.<br /><br />
+      <h1>READ THIS CAREFULLY</h1>
+      <p class="sub">This is not motivation. This is a contract with yourself.</p>
+    </header>
 
-    From this point forward,<br />
-    I act as who I decided to be.
-  </p>
+    <!-- Centered card -->
+    <section class="card">
 
-  <label class="check oath-check">
-    <input type="checkbox" />
-    I accept this without negotiation.
-  </label>
+      <p class="oath-text">
+        I am not poor in resources.<br />
+        I am poor only where I lack discipline.<br /><br />
 
-  <a class="btn block" href="/pending.html">ENTER</a>
-</div>
+        I will not confuse comfort with safety.<br />
+        I will not confuse movement with progress.<br />
+        I will not wait to be rescued.<br /><br />
+
+        My results are my responsibility.<br />
+        No explanation will save me.<br /><br />
+
+        From this point forward,<br />
+        I act as who I decided to be.
+      </p>
+
+      <!-- Checkbox (must be checked) -->
+      <div class="oath-confirm">
+        <input id="oathAgree" type="checkbox" class="oath-checkbox" />
+        <label for="oathAgree">I accept this without negotiation.</label>
+      </div>
+
+      <div class="actions" style="flex-direction:column; gap:12px;">
+        <!-- Disabled until checkbox checked -->
+        <a id="enterBtn" class="btn btn-disabled" href="#" aria-disabled="true">ENTER</a>
+        <div id="msg" class="result err" style="display:none;"></div>
+      </div>
+
+    </section>
 
   </main>
+
+  <!-- Page-only styles (won't affect other pages) -->
+  <style>
+    /* Keep brand accent under WE NOT (theme-consistent) */
+    .brand-wrap{ display:inline-flex; flex-direction:column; gap:4px; }
+    .brand-offset{ align-items:flex-start; }
+    .brand-accent{
+      display:block;
+      width:36px;
+      height:3px;
+      background:var(--danger, #FF2A2A);
+      border-radius:999px;
+      margin-left:2px;
+    }
+
+    /* Oath text formatting */
+    .oath-text{
+      margin:0;
+      line-height:1.55;
+      color:rgba(255,212,0,.92);
+      font-weight:700;
+    }
+
+    /* Checkbox row (native checkbox; overrides global appearance:none on inputs) */
+    .oath-confirm{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      margin-top:16px;
+    }
+    .oath-checkbox{
+      width:18px;
+      height:18px;
+      margin-top:3px;
+      flex-shrink:0;
+      appearance:auto !important;
+      -webkit-appearance:checkbox !important;
+      cursor:pointer;
+    }
+    .oath-confirm label{
+      font-weight:600;
+      line-height:1.35;
+      cursor:pointer;
+    }
+
+    /* Disabled button look */
+    .btn-disabled{
+      opacity:.45;
+      pointer-events:none;
+      filter:none !important;
+    }
+  </style>
+
+  <script>
+    const checkbox = document.getElementById("oathAgree");
+    const enterBtn = document.getElementById("enterBtn");
+    const msg = document.getElementById("msg");
+
+    function showMessage(text){
+      if (!text){
+        msg.style.display = "none";
+        msg.textContent = "";
+        return;
+      }
+      msg.style.display = "block";
+      msg.textContent = text;
+    }
+
+    function setEnabled(enabled){
+      if (enabled){
+        enterBtn.classList.remove("btn-disabled");
+        enterBtn.setAttribute("href", "/pending.html");
+        enterBtn.setAttribute("aria-disabled", "false");
+        showMessage("");
+      } else {
+        enterBtn.classList.add("btn-disabled");
+        enterBtn.setAttribute("href", "#");
+        enterBtn.setAttribute("aria-disabled", "true");
+      }
+    }
+
+    // Start disabled
+    setEnabled(false);
+
+    checkbox.addEventListener("change", () => {
+      setEnabled(checkbox.checked);
+    });
+
+    // Extra safety: if user somehow clicks while disabled
+    enterBtn.addEventListener("click", (e) => {
+      if (enterBtn.classList.contains("btn-disabled")){
+        e.preventDefault();
+        showMessage("You must accept the oath before you can enter.");
+      }
+    });
+  </script>
+
 </body>
 </html>
