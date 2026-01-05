@@ -11,9 +11,10 @@
   <main class="wrap">
 
     <header class="hero">
-      <div class="brand-wrap">
+      <!-- ✅ Brand with accent under WE NOT -->
+      <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
-        <span class="brand-accent"></span>
+        <span class="brand-accent" aria-hidden="true"></span>
       </div>
 
       <h1>CHECKPOINT</h1>
@@ -25,20 +26,34 @@
 
     <section class="card">
 
+      <!-- ✅ Upload proof -->
       <div class="field">
-        <span>
-  Upload proof <em class="req">*</em>
-</span>
-        <div class="muted">
-          A photo of a completed checkpoint page (handwritten).
+        <span>Upload proof <span class="req">*</span></span>
+        <div class="muted">A photo of a completed checkpoint page (handwritten).</div>
+
+        <!-- ✅ Take Photo option (mobile camera) -->
+        <input
+          id="proofCamera"
+          type="file"
+          accept="image/*"
+          capture="environment"
+        />
+
+        <div class="muted" style="margin-top:8px;">
+          Or upload an existing photo:
         </div>
-        <input type="file" />
+
+        <!-- ✅ Upload existing photo -->
+        <input
+          id="proofUpload"
+          type="file"
+          accept="image/*"
+        />
       </div>
 
+      <!-- ✅ Question -->
       <div class="field">
-        <span>
-    Why this moment matters <em class="req">*</em>
-      </span>
+        <span>Why this moment matters <span class="req">*</span></span>
         <div class="muted">
           This question forces you to confront the lie that kept you stuck.
         </div>
@@ -49,33 +64,88 @@
         ></textarea>
       </div>
 
-      <label class="radio" style="text-transform:none; letter-spacing:0; font-weight:800;">
+      <!-- ✅ Checkbox (NOT bold) -->
+      <label class="confirm">
         <input type="checkbox" />
-        I understand this checkpoint is a line I cannot step back over.
+        <span>I understand this checkpoint is a line I cannot step back over.</span>
       </label>
 
-      <div class="actions">
-        <a class="btn danger" href="oath.html">CROSS THE LINE</a>
+      <!-- ✅ Actions -->
+      <div class="actions actions-stack">
+        <a class="btn btn-danger" href="oath.html">CROSS THE LINE</a>
+
+        <!-- ✅ Save later link -->
+        <a class="save-later" href="member.html">Save and complete later</a>
       </div>
+
     </section>
   </main>
 
-  <!-- Minimal page-specific styling -->
+  <!-- ✅ Page-specific styling only -->
   <style>
+    /* Brand accent under WE NOT */
     .brand-wrap{
       display:inline-flex;
       flex-direction:column;
-      align-items:flex-start;
       gap:4px;
     }
+    .brand-offset{ align-items:flex-start; }
 
-    /* Subtle red authority mark */
     .brand-accent{
-      width:42px;
+      display:block;
+      width:36px;              /* shorter than full word */
       height:3px;
-      background:var(--danger);
+      background:var(--danger, #FF2A2A);
       border-radius:999px;
+      margin-left:2px;         /* optical alignment under WE NOT */
     }
+
+    /* Checkbox row (unbold + clean alignment) */
+    .confirm{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      margin-top:12px;
+      font-weight:600;         /* unbold vs 800/900 */
+      letter-spacing:0;
+      text-transform:none;
+      color:rgba(255,212,0,.92);
+    }
+    .confirm input{
+      margin-top:3px;
+      width:auto;
+    }
+    .confirm span{
+      font-weight:600;         /* ensure not bold */
+      line-height:1.35;
+    }
+
+    /* Stack actions like your other pages */
+    .actions-stack{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      margin-top:16px;
+    }
+
+    /* Red button w/ white text */
+    .btn-danger{
+      background: var(--danger, #FF2A2A) !important;
+      color:#fff !important;
+      text-decoration:none;
+    }
+
+    /* Save later link */
+    .save-later{
+      font-size:12px;
+      font-weight:700;
+      color:rgba(255,255,255,.55);
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+    .save-later:hover{ color:#fff; }
   </style>
+
 </body>
 </html>
