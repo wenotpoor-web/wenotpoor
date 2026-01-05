@@ -126,6 +126,14 @@ body.wnp{
   font-size:13px;
 }
 
+/* Muted helper copy */
+.muted{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:600;
+  line-height:1.4;
+}
+
 /* INPUTS — master look (desktop + mobile consistent) */
 input, textarea, select{
   width:100%;
@@ -183,6 +191,8 @@ input:focus, textarea:focus, select:focus{
   justify-content:center;
   text-align:center;
   line-height:1;
+
+  text-decoration:none; /* anchors should look like buttons */
 }
 
 .btn:hover{filter:brightness(.98)}
@@ -259,7 +269,78 @@ a:hover{color:#fff}
 .top-login:hover{ color:#fff; }
 
 /* =========================
-   MOBILE FIXES + SAFARi FIXES
+   CHECKPOINT-SPECIFIC HELPERS
+   ========================= */
+
+/* Stack actions (Log In / Back, Cross Line / Save later, etc.) */
+.actions.actions-stack{
+  flex-direction:column;
+  gap:12px;
+}
+
+/* Red danger button (CROSS THE LINE) */
+.btn.btn-danger,
+.btn-danger{
+  background:var(--danger) !important;
+  color:#fff !important;
+}
+
+/* Disabled state for anchor-button (used by Cross Line until checkbox checked) */
+.btn.disabled,
+.btn[aria-disabled="true"]{
+  opacity:.45;
+  filter:none;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+
+/* Save later link styling (grey, small, intentional) */
+.save-later{
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,255,255,.55);
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.save-later:hover{ color:#fff; }
+
+/* Checkbox row — ensure it actually shows on Android Chrome */
+.confirm{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:12px;
+  color:rgba(255,212,0,.92);
+  font-weight:600;
+  text-transform:none;
+  letter-spacing:0;
+}
+
+/* IMPORTANT: do NOT let global input styling make checkbox invisible */
+.confirm input[type="checkbox"]{
+  width:18px !important;
+  height:18px !important;
+  padding:0 !important;
+  margin-top:3px;
+  border-radius:4px;
+  border:2px solid rgba(255,212,0,.75);
+  background:#000;
+  appearance:auto !important;
+  -webkit-appearance:checkbox !important;
+  accent-color: var(--accent);
+}
+
+/* Camera input: keep it clean (not ugly browser default in a giant white block) */
+input[type="file"]{
+  padding:10px 12px;
+  border-radius:18px;
+  border:2px solid rgba(255,212,0,.75);
+  background:#000;
+  color:rgba(255,212,0,.92);
+}
+
+/* =========================
+   MOBILE FIXES + SAFARI FIXES
    ========================= */
 
 /* Force dark inputs on mobile (prevents white fields) */
