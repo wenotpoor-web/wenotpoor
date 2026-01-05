@@ -3,15 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>We Not Poor — Manual Submission</title>
+  <title>We Not Poor — Submit Proof</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 
 <body class="wnp">
   <main class="wrap">
     <header class="hero">
-      <div class="brand">WE NOT POOR</div>
-      <h1>Manual Submission</h1>
+      <!-- ✅ Brand + red accent line under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <h1>Submit Proof</h1>
       <p class="sub">
         Upload your proof. Membership approval is not guaranteed. If approved, you will gain access.
       </p>
@@ -20,27 +25,27 @@
     <section class="card">
       <div class="card-h">
         <div class="card-title">UPLOADS</div>
-        <div class="pill" id="apiPill">API: checking…</div>
+        <!-- ✅ API pill removed/hidden -->
       </div>
 
       <div class="grid-2">
         <label class="field">
-          <span>Receipt / Invoice (Amazon or retailer)</span>
+          <span>Receipt / Invoice (Amazon or retailer) <span class="req">*</span></span>
           <input id="receipt" type="file" accept="image/png,image/jpeg,image/webp" />
           <div class="muted">PNG/JPG/WEBP • Max 10MB</div>
         </label>
 
         <label class="field">
-          <span>Checkpoint Proof (photo of completed checkpoint)</span>
+          <span>Checkpoint Proof (photo of completed checkpoint) <span class="req">*</span></span>
           <input id="checkpoint" type="file" accept="image/png,image/jpeg,image/webp" />
           <div class="muted">PNG/JPG/WEBP • Max 10MB</div>
         </label>
       </div>
 
       <label class="field">
-        <span>Question (Required)</span>
+        <span>Question <span class="req">*</span></span>
         <div class="prompt">
-          What lie have you been telling yourself<br/>that this book exposed?
+          What lie have you been telling yourself that this book exposed?
         </div>
         <textarea id="answer" rows="5" placeholder="Write the answer. No excuses."></textarea>
       </label>
@@ -50,12 +55,18 @@
         <button class="btn ghost" id="resetBtn" type="button">Reset</button>
       </div>
 
-      <pre class="result" id="result">Waiting…</pre>
+      <!-- ✅ Hide API status output -->
+      <pre class="result" id="result" style="display:none;"></pre>
+
+      <!-- ✅ Centered disclaimer at bottom of card -->
+      <div class="muted" style="text-align:center; margin-top:14px; font-weight:700;">
+        No guarantees. No promises. Only responsibility.
+      </div>
     </section>
 
-    <footer class="foot">
-      <span>© We Not Poor</span>
-      <span class="muted">No guarantees. No promises. Only responsibility.</span>
+    <!-- ✅ Footer: remove copyright line entirely -->
+    <footer class="foot foot-center">
+      <span></span>
     </footer>
   </main>
 
@@ -64,30 +75,27 @@
     const $ = (id) => document.getElementById(id);
     const result = $("result");
 
+    // ✅ Silent status (no UI)
+    async function health() {
+      try { await fetch(API + "/api/health", { credentials: "include" }); } catch {}
+    }
+    health();
+
+    // ✅ Keep functionality but keep result hidden unless error
     function setResult(msg, isErr=false) {
+      if (!msg) { result.style.display = "none"; return; }
+      if (!isErr) { result.style.display = "none"; return; }
+      result.style.display = "block";
       result.textContent = msg;
       result.classList.toggle("err", !!isErr);
     }
-
-    async function health() {
-      try {
-        const r = await fetch(API + "/api/health", { credentials: "include" });
-        const ok = r.ok;
-        $("apiPill").textContent = ok ? "API: online" : "API: offline";
-        $("apiPill").classList.toggle("good", ok);
-      } catch {
-        $("apiPill").textContent = "API: offline";
-        $("apiPill").classList.remove("good");
-      }
-    }
-    health();
 
     $("resetBtn").onclick = () => {
       $("receipt").value = "";
       $("checkpoint").value = "";
       $("answer").value = "";
       sessionStorage.removeItem("wnp_payload");
-      setResult("Reset.");
+      setResult("", false);
     };
 
     function validateFile(file) {
@@ -128,13 +136,9 @@
       if (!answer) return setResult("Answer the question.", true);
 
       try {
-        setResult("Uploading receipt…");
         const receipt_key = await uploadOne(receipt, "receipt");
-
-        setResult("Uploading checkpoint proof…");
         const checkpoint_key = await uploadOne(checkpoint, "checkpoint");
 
-        // Stage for email-setup screen
         const payload = {
           mode: "manual",
           receipt_key,
@@ -143,7 +147,6 @@
         };
         sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
 
-        setResult("Uploads complete. Continuing…");
         window.location.href = "/email-setup.html";
       } catch (e) {
         setResult(e.message || "Error during upload.", true);
