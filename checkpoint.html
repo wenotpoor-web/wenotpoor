@@ -28,7 +28,6 @@
       <div class="field">
         <span>Upload proof <span class="req">*</span></span>
         <div class="muted">A photo of a completed checkpoint page (handwritten).</div>
-
         <input type="file" accept="image/*" capture="environment" />
       </div>
 
@@ -37,7 +36,6 @@
         <div class="muted">
           This question forces you to confront the lie that kept you stuck.
         </div>
-
         <textarea
           id="q"
           maxlength="500"
@@ -45,7 +43,6 @@
         ></textarea>
       </div>
 
-      <!-- ✅ FIXED: native checkbox restored -->
       <div class="checkpoint-confirm">
         <input id="confirmLine" type="checkbox" class="checkpoint-checkbox" />
         <label for="confirmLine">
@@ -54,12 +51,14 @@
       </div>
 
       <div class="actions">
+        <!-- 🔴 RED BUTTON -->
         <a class="btn btn-danger" href="oath.html">CROSS THE LINE</a>
       </div>
 
     </section>
   </main>
 
+  <!-- Page-specific overrides only -->
   <style>
     .checkpoint-confirm{
       display:flex;
@@ -68,24 +67,27 @@
       margin-top:16px;
     }
 
-    /* ✅ Override global input appearance:none */
     .checkpoint-checkbox{
       width:18px;
       height:18px;
       margin-top:3px;
       flex-shrink:0;
-
-      appearance: auto !important;
-      -webkit-appearance: checkbox !important;
-      background: transparent !important;
-      border-radius: 4px;
-      cursor: pointer;
+      appearance:auto !important;
+      -webkit-appearance:checkbox !important;
+      cursor:pointer;
     }
 
     .checkpoint-confirm label{
-      font-weight:600; /* unbold */
+      font-weight:600;
       line-height:1.35;
       cursor:pointer;
+    }
+
+    /* 🔴 CROSS THE LINE button */
+    .btn-danger{
+      background:#FF2A2A !important;
+      color:#FFFFFF !important;
+      border:none;
     }
   </style>
 
