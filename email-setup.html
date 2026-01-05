@@ -13,8 +13,13 @@
   <main class="wrap">
 
     <header class="hero">
-      <span class="brand">WE NOT POOR</span>
-      <h1>Email & Password Setup</h1>
+      <!-- ✅ Brand with red accent line under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <h1>Email &amp; Password Setup</h1>
       <p class="sub">
         Confirm your email. We’ll send a temporary password. Then you’ll set your permanent password.
       </p>
@@ -24,29 +29,28 @@
     <section class="card">
       <div class="card-h">
         <div class="card-title">STEP 1 — CONFIRM EMAIL</div>
-        <div class="pill" id="apiPill">API: checking…</div>
+        <!-- ✅ API status hidden -->
+        <div class="pill" id="apiPill" style="display:none;"></div>
       </div>
 
       <div class="grid-2">
         <div class="field">
           <span>Email</span>
-          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+          <input id="email" type="email" placeholder="Enter Email" autocomplete="email" />
         </div>
 
         <div class="field">
           <span>Confirm Email</span>
-          <input id="email2" type="email" placeholder="retype email" autocomplete="email" />
+          <input id="email2" type="email" placeholder="Retype Email" autocomplete="email" />
         </div>
       </div>
 
       <div class="actions">
         <button class="btn" id="sendTemp" type="button">Send temporary password</button>
-        <button class="btn ghost" id="resetAll" type="button">Reset</button>
+        <!-- ✅ Reset button removed -->
       </div>
 
-      <div class="note">
-        Temporary passwords look like: <b>Discipline243</b>, <b>Clarity087</b>, etc.
-      </div>
+      <!-- ✅ Temp password example note removed -->
 
       <div class="result err" id="step1Err" style="display:none;"></div>
     </section>
@@ -61,7 +65,7 @@
       <div class="grid-2">
         <div class="field">
           <span>Temporary Password</span>
-          <input id="temp" type="text" placeholder="Discipline243" />
+          <input id="temp" type="text" placeholder="Enter Temporary Password" />
         </div>
 
         <div class="field">
@@ -74,10 +78,8 @@
           <input id="pw2" type="password" placeholder="••••••••" autocomplete="new-password" />
         </div>
 
-        <!-- NOTE: Mode UI remains for now because your script uses it.
-             If you are removing mode selection from this page later,
-             we’ll switch the script to read the path from sessionStorage instead. -->
-        <div class="field">
+        <!-- ✅ Mode UI hidden (but still present for script compatibility) -->
+        <div class="field" style="display:none;">
           <span>Mode</span>
           <div class="mode">
             <label class="radio">
@@ -93,17 +95,35 @@
       </div>
 
       <div class="actions">
-        <button class="btn" id="confirmPw" type="button">Set password & continue</button>
+        <button class="btn" id="confirmPw" type="button">Set password &amp; continue</button>
       </div>
 
       <pre class="result" id="result">Waiting…</pre>
     </section>
 
-    <footer class="foot">
-      <span>© We Not Poor</span>
+    <!-- ✅ Footer centered, copyright removed -->
+    <footer class="foot foot-center">
       <span class="muted">Membership is not open. It is earned.</span>
     </footer>
   </main>
+
+  <!-- ✅ Red accent line under WE NOT (page-safe in case CSS missing it) -->
+  <style>
+    .brand-wrap{
+      display:inline-flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .brand-offset{ align-items:flex-start; }
+    .brand-accent{
+      display:block;
+      width:36px;
+      height:3px;
+      background: var(--danger, #FF2A2A);
+      border-radius:999px;
+      margin-left:2px;
+    }
+  </style>
 
   <script>
     const API = "https://wenotpoor-api.wenotpoor.workers.dev";
@@ -134,6 +154,7 @@
       try { return JSON.parse(raw); } catch { return null; }
     }
 
+    // ✅ Health check still runs (optional) but UI is hidden
     async function health() {
       try {
         const r = await fetch(API + "/api/health", { credentials: "include" });
@@ -145,15 +166,7 @@
         $("apiPill").classList.remove("good");
       }
     }
-
     health();
-
-    $("resetAll").onclick = () => {
-      ["email","email2","temp","pw","pw2"].forEach(id => $(id).value = "");
-      sessionStorage.removeItem("wnp_payload");
-      setStep1Err("");
-      setResult("Reset.");
-    };
 
     $("sendTemp").onclick = async () => {
       setStep1Err("");
@@ -226,10 +239,8 @@
 
       // ROUTING (use your real filenames)
       if (mode === "manual") {
-        // oath is locked until approved
         window.location.href = "/decision.html";
       } else {
-        // auto path goes to oath next
         window.location.href = "/oath.html";
       }
     };
