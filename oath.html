@@ -21,8 +21,8 @@
       <p class="sub">This is not motivation. This is a contract with yourself.</p>
     </header>
 
-    <!-- Centered card -->
-    <section class="card">
+    <!-- Centered + proportionate card -->
+    <section class="card oath-card">
 
       <p class="oath-text">
         I am not poor in resources.<br />
@@ -39,14 +39,15 @@
         I act as who I decided to be.
       </p>
 
-      <!-- Checkbox (must be checked) -->
+      <!-- Centered checkbox -->
       <div class="oath-confirm">
-        <input id="oathAgree" type="checkbox" class="oath-checkbox" />
-        <label for="oathAgree">I accept this without negotiation.</label>
+        <label class="oath-check">
+          <input id="oathAgree" type="checkbox" class="oath-checkbox" />
+          <span>I accept this without negotiation.</span>
+        </label>
       </div>
 
       <div class="actions" style="flex-direction:column; gap:12px;">
-        <!-- Disabled until checkbox checked -->
         <a id="enterBtn" class="btn btn-disabled" href="#" aria-disabled="true">ENTER</a>
         <div id="msg" class="result err" style="display:none;"></div>
       </div>
@@ -55,47 +56,59 @@
 
   </main>
 
-  <!-- Page-only styles (won't affect other pages) -->
+  <!-- Page-only styles -->
   <style>
-    /* Keep brand accent under WE NOT (theme-consistent) */
-    .brand-wrap{ display:inline-flex; flex-direction:column; gap:4px; }
+    /* Brand accent */
+    .brand-wrap{
+      display:inline-flex;
+      flex-direction:column;
+      gap:4px;
+    }
     .brand-offset{ align-items:flex-start; }
     .brand-accent{
-      display:block;
       width:36px;
       height:3px;
-      background:var(--danger, #FF2A2A);
+      background:var(--danger,#FF2A2A);
       border-radius:999px;
       margin-left:2px;
     }
 
-    /* Oath text formatting */
-  .oath-text{
-  margin:0;
-  line-height:1.55;
-  color:rgba(255,212,0,.92);
-  font-weight:700;
-  text-align:center; /* ✅ centers all oath lines */
-}
-    /* Checkbox row (native checkbox; overrides global appearance:none on inputs) */
+    /* Proportionate oath card */
+    .oath-card{
+      max-width:520px; /* ⬅ reduced width for authority & focus */
+    }
+
+    /* Centered oath text */
+    .oath-text{
+      margin:0;
+      line-height:1.55;
+      color:rgba(255,212,0,.92);
+      font-weight:700;
+      text-align:center;
+    }
+
+    /* Centered checkbox block */
     .oath-confirm{
       display:flex;
-      align-items:flex-start;
-      gap:10px;
-      margin-top:16px;
+      justify-content:center;
+      margin-top:18px;
     }
+    .oath-check{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:600;
+      line-height:1.35;
+      cursor:pointer;
+      text-align:center;
+    }
+
+    /* Restore native checkbox */
     .oath-checkbox{
       width:18px;
       height:18px;
-      margin-top:3px;
-      flex-shrink:0;
       appearance:auto !important;
       -webkit-appearance:checkbox !important;
-      cursor:pointer;
-    }
-    .oath-confirm label{
-      font-weight:600;
-      line-height:1.35;
       cursor:pointer;
     }
 
@@ -135,14 +148,12 @@
       }
     }
 
-    // Start disabled
     setEnabled(false);
 
     checkbox.addEventListener("change", () => {
       setEnabled(checkbox.checked);
     });
 
-    // Extra safety: if user somehow clicks while disabled
     enterBtn.addEventListener("click", (e) => {
       if (enterBtn.classList.contains("btn-disabled")){
         e.preventDefault();
