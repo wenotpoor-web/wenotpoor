@@ -26,7 +26,7 @@
 
     <section class="card">
 
-      <!-- Upload proof (camera only) -->
+      <!-- Upload proof -->
       <div class="field">
         <span>Upload proof <span class="req">*</span></span>
         <div class="muted">
@@ -34,19 +34,19 @@
         </div>
 
         <input
-          id="proofCamera"
           type="file"
           accept="image/*"
           capture="environment"
         />
       </div>
 
-      <!-- Reflection question -->
+      <!-- Question -->
       <div class="field">
         <span>Why this moment matters <span class="req">*</span></span>
         <div class="muted">
           This question forces you to confront the lie that kept you stuck.
         </div>
+
         <textarea
           id="q"
           maxlength="500"
@@ -54,50 +54,49 @@
         ></textarea>
       </div>
 
-      <!-- Confirmation checkbox -->
-      <label class="confirm" for="checkpointConfirm">
-        <input id="checkpointConfirm" type="checkbox" />
-        <span>
+      <!-- ✅ FIXED CHECKBOX (visible on desktop + mobile) -->
+      <div class="checkpoint-confirm">
+        <input
+          id="confirmLine"
+          type="checkbox"
+          class="checkpoint-checkbox"
+        />
+        <label for="confirmLine">
           I understand this checkpoint is a line I cannot step back over.
-        </span>
-      </label>
+        </label>
+      </div>
 
-      <!-- Actions -->
-      <div class="actions actions-stack">
-        <a
-          id="crossLineBtn"
-          class="btn btn-danger disabled"
-          href="#"
-          aria-disabled="true"
-        >
-          CROSS THE LINE
-        </a>
-
-        <a class="save-later" href="member.html">
-          Save and complete later
-        </a>
+      <!-- Action -->
+      <div class="actions">
+        <a class="btn btn-danger" href="oath.html">CROSS THE LINE</a>
       </div>
 
     </section>
   </main>
 
-  <!-- Behavior only (no styling assumptions) -->
-  <script>
-    const confirmBox = document.getElementById("checkpointConfirm");
-    const crossBtn = document.getElementById("crossLineBtn");
+  <!-- Page-specific structural safety (NO visual theming yet) -->
+  <style>
+    /* Checkbox wrapper — prevents global input styles from hijacking it */
+    .checkpoint-confirm{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      margin-top:16px;
+    }
 
-    confirmBox.addEventListener("change", () => {
-      if (confirmBox.checked) {
-        crossBtn.classList.remove("disabled");
-        crossBtn.setAttribute("href", "oath.html");
-        crossBtn.removeAttribute("aria-disabled");
-      } else {
-        crossBtn.classList.add("disabled");
-        crossBtn.setAttribute("href", "#");
-        crossBtn.setAttribute("aria-disabled", "true");
-      }
-    });
-  </script>
+    .checkpoint-checkbox{
+      width:18px;
+      height:18px;
+      margin-top:3px;
+      flex-shrink:0;
+    }
+
+    .checkpoint-confirm label{
+      font-weight:600; /* NOT bold */
+      line-height:1.35;
+      cursor:pointer;
+    }
+  </style>
 
 </body>
 </html>
