@@ -29,9 +29,9 @@
       </p>
     </header>
 
-    <section class="card">
+    <!-- ✅ Card now proportionate to content -->
+    <section class="card register-card">
 
-      <!-- ✅ Proportionate Book Code field -->
       <div class="field book-code-field">
         <span>Book Code <span class="req">*</span></span>
         <input
@@ -42,12 +42,12 @@
         />
       </div>
 
-      <div class="actions" style="flex-direction:column; gap:12px;">
+      <div class="actions actions-stack">
         <a class="btn" href="checkpoint.html">CONTINUE</a>
         <a class="btn ghost" href="member.html">BACK</a>
       </div>
 
-      <p class="note" style="text-align:center; margin-top:14px;">
+      <p class="note center-note">
         One copy. One entry. Not transferable.
       </p>
 
@@ -55,17 +55,47 @@
 
   </main>
 
-  <!-- ✅ Page-specific width control (safe, isolated) -->
+  <!-- ✅ Page-scoped layout tuning only -->
   <style>
-    /* Desktop: intentional, not stretched */
+    /* Card hugs the form instead of full width */
+    .register-card{
+      max-width: 520px;   /* visually balanced with input */
+      margin-left: auto;
+      margin-right: auto;
+      padding: 22px 20px 24px;
+    }
+
+    /* Input field proportion */
     .book-code-field{
       max-width: 420px;
       margin-left: auto;
       margin-right: auto;
     }
 
-    /* Mobile: full-width for usability */
+    .book-code-field input{
+      width:100%;
+    }
+
+    /* Stack buttons cleanly */
+    .actions-stack{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:16px;
+      align-items:center;
+    }
+
+    /* Center the fine print */
+    .center-note{
+      text-align:center;
+      margin-top:14px;
+    }
+
+    /* Mobile: relax constraints for usability */
     @media (max-width: 520px){
+      .register-card{
+        max-width: 100%;
+      }
       .book-code-field{
         max-width: 100%;
       }
