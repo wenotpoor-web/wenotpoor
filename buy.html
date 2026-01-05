@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>DO NOT READ THIS IF YOU WANT TO STAY POOR</title>
+  <title>Buy the Book · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root{
@@ -14,6 +14,7 @@
       --line:rgba(255,212,0,.22);
       --danger:#FF2A2A;
       --radius:18px;
+      --font:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     }
 
     *{box-sizing:border-box}
@@ -22,15 +23,51 @@
       min-height:100vh;
       background:var(--bg);
       color:var(--yellow);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      font-family:var(--font);
       display:flex;
       align-items:center;
       justify-content:center;
       padding:32px 18px;
     }
 
-    .wrap{
-      width:min(980px, 100%);
+    .wrap{ width:min(980px, 100%); }
+
+    /* Header (matches WNP theme: WE NOT + red accent line) */
+    .hero{
+      margin:0 0 16px 0;
+      text-align:left;
+    }
+    .brand-wrap{
+      display:inline-flex;
+      flex-direction:column;
+      gap:8px;
+      margin:0 0 10px 0;
+    }
+    .brand{
+      font-weight:900;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      font-size:14px;
+      line-height:1;
+    }
+    .brand-accent{
+      width:92px;         /* red line under “WE NOT” vibe */
+      height:4px;
+      background:var(--danger);
+      border-radius:999px;
+    }
+    .hero h1{
+      margin:0 0 8px 0;
+      font-size:28px;
+      line-height:1.15;
+      letter-spacing:.02em;
+    }
+    .hero .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:13.5px;
+      letter-spacing:.02em;
+      max-width:72ch;
     }
 
     /* Card */
@@ -42,7 +79,6 @@
       overflow:hidden;
       box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;
     }
-
     .card-top{
       height:6px;
       background:var(--danger);
@@ -103,12 +139,12 @@
       align-items:center;
       justify-content:center;
     }
-
     .cover-frame img{
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
+      cursor:pointer;
     }
 
     .cover-badge{
@@ -127,9 +163,7 @@
     }
 
     /* Right: content */
-    .content{
-      text-align:left;
-    }
+    .content{ text-align:left; }
 
     .title{
       margin:0 0 10px 0;
@@ -139,15 +173,15 @@
     }
 
     .desc{
-      margin:0 0 14px 0;
+      margin:0 0 12px 0;
       color:var(--text);
       line-height:1.55;
       font-size:15.5px;
-      max-width: 44ch;
+      max-width: 46ch;
     }
 
     .meta{
-      margin:0 0 20px 0;
+      margin:0 0 18px 0;
       color:var(--muted);
       font-size:13.5px;
       letter-spacing:.02em;
@@ -155,9 +189,10 @@
 
     .actions{
       display:flex;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:10px;
+      margin-top:6px;
     }
 
     .btn{
@@ -167,12 +202,12 @@
       padding:14px 20px;
       background:var(--yellow);
       color:#000;
-      font-weight:800;
+      font-weight:900;
       text-decoration:none;
       border-radius:12px;
       border:1px solid rgba(255,212,0,.7);
       transition:transform .08s ease, filter .15s ease;
-      min-width:160px;
+      min-width:180px;
     }
     .btn:hover{ filter:brightness(1.06); }
     .btn:active{ transform:scale(.99); }
@@ -182,8 +217,49 @@
       font-size:12.5px;
     }
 
+    /* Quantity selector */
+    .qty{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid rgba(255,212,0,.25);
+      border-radius:12px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.02);
+      width:fit-content;
+    }
+    .qty label{
+      font-size:12.5px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,.72);
+    }
+    .qty select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      background:#000;
+      color:var(--yellow);
+      border:1px solid rgba(255,212,0,.35);
+      border-radius:10px;
+      padding:8px 34px 8px 12px;
+      font-weight:800;
+      cursor:pointer;
+      position:relative;
+      font-family:var(--font);
+    }
+    .qty .chev{
+      margin-left:-28px;
+      pointer-events:none;
+      color:var(--yellow);
+      font-size:12px;
+      opacity:.9;
+    }
+
     /* Responsive */
     @media (max-width: 860px){
+      .hero{ text-align:center; }
+      .brand-wrap{ align-items:center; }
       .card-body{
         grid-template-columns: 1fr;
         gap:18px;
@@ -191,36 +267,50 @@
       .book{ justify-content:center; }
       .content{ text-align:center; }
       .desc{ margin-left:auto; margin-right:auto; }
-      .actions{ justify-content:center; }
+      .actions{ align-items:center; }
+      .qty{ justify-content:center; }
     }
   </style>
 </head>
 
 <body>
   <main class="wrap">
+    <!-- Header (WNP style) -->
+    <header class="hero" aria-label="Page header">
+      <div class="brand-wrap">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <!-- “Checkpoint” replaced -->
+      <h1>Buy the Book</h1>
+
+      <!-- Two lines replaced -->
+      <p class="sub">
+        Order your paperback copy and we’ll ship it to your door.<br />
+        Use the arrows to view the front and back cover before checkout.
+      </p>
+    </header>
+
     <section class="card" aria-label="Book purchase card">
       <div class="card-top" aria-hidden="true"></div>
 
       <div class="card-body">
         <!-- LEFT: cover switcher -->
         <div class="book">
-          <button class="nav-btn" id="prevCover" type="button" aria-label="Previous cover">
-            &#9664;
-          </button>
+          <button class="nav-btn" id="prevCover" type="button" aria-label="Previous cover">&#9664;</button>
 
-          <div class="cover-frame" aria-live="polite">
+          <div class="cover-frame" aria-live="polite" title="Click cover to toggle">
             <img id="coverImg" src="/images/front_final.png" alt="Front cover of the book" />
             <span class="cover-badge" id="coverLabel">Front</span>
           </div>
 
-          <button class="nav-btn" id="nextCover" type="button" aria-label="Next cover">
-            &#9654;
-          </button>
+          <button class="nav-btn" id="nextCover" type="button" aria-label="Next cover">&#9654;</button>
         </div>
 
         <!-- RIGHT: text + CTA -->
         <div class="content">
-          <h1 class="title">DO NOT READ THIS IF YOU WANT TO STAY POOR</h1>
+          <h2 class="title">DO NOT READ THIS IF YOU WANT TO STAY POOR</h2>
 
           <p class="desc">
             This is not motivation. This is not comfort.
@@ -228,11 +318,27 @@
             and thinking patterns that keep people stuck.
           </p>
 
-          <p class="meta">Paperback. Ships directly to you.</p>
+          <p class="meta">Paperback. Ships directly to your address.</p>
 
           <div class="actions">
-            <a class="btn" href="https://buy.stripe.com/YOUR_LINK_HERE">Buy Now</a>
-            <span class="hint">Use arrows to view front/back cover.</span>
+            <!-- Button uses quantity value to build a simple query param you can read later if needed -->
+            <a class="btn" id="buyBtn" href="https://buy.stripe.com/YOUR_LINK_HERE">Buy Now</a>
+
+            <!-- Quantity selector (NOTE: Payment Link can also handle qty. This is UI for your page.) -->
+            <div class="qty" aria-label="Quantity selector">
+              <label for="qty">Quantity</label>
+              <select id="qty" name="qty">
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+              </select>
+              <span class="chev">▼</span>
+            </div>
+
+            <span class="hint">Tip: Click the cover to flip front/back.</span>
           </div>
         </div>
       </div>
@@ -240,7 +346,7 @@
   </main>
 
   <script>
-    // Simple front/back cover toggle
+    // Front/back cover toggle
     const covers = [
       { src: "/images/front_final.png", label: "Front", alt: "Front cover of the book" },
       { src: "/images/back_final.png",  label: "Back",  alt: "Back cover of the book" }
@@ -252,6 +358,9 @@
     const label = document.getElementById("coverLabel");
     const prev = document.getElementById("prevCover");
     const next = document.getElementById("nextCover");
+
+    const qty = document.getElementById("qty");
+    const buyBtn = document.getElementById("buyBtn");
 
     function render() {
       img.src = covers[idx].src;
@@ -266,9 +375,21 @@
 
     prev.addEventListener("click", () => go(-1));
     next.addEventListener("click", () => go(1));
-
-    // Optional: click image to toggle
     img.addEventListener("click", () => go(1));
+
+    // Quantity selector behavior:
+    // If your Stripe Payment Link has "Adjustable quantity" enabled, the customer can set qty in Checkout.
+    // This keeps your page UI consistent and (optionally) passes qty as a query param for tracking.
+    const baseHref = buyBtn.getAttribute("href");
+    function updateBuyLink(){
+      const q = qty.value || "1";
+      // Append ?qty= to your Stripe link for tracking (Stripe ignores unknown params safely).
+      // If your Stripe link already has params, we add with &
+      const joiner = baseHref.includes("?") ? "&" : "?";
+      buyBtn.setAttribute("href", baseHref + joiner + "qty=" + encodeURIComponent(q));
+    }
+    qty.addEventListener("change", updateBuyLink);
+    updateBuyLink();
   </script>
 </body>
 </html>
