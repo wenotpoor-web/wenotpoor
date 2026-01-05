@@ -11,7 +11,6 @@
   <main class="wrap">
 
     <header class="hero">
-      <!-- Brand with accent under WE NOT -->
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -26,21 +25,13 @@
 
     <section class="card">
 
-      <!-- Upload proof -->
       <div class="field">
         <span>Upload proof <span class="req">*</span></span>
-        <div class="muted">
-          A photo of a completed checkpoint page (handwritten).
-        </div>
+        <div class="muted">A photo of a completed checkpoint page (handwritten).</div>
 
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-        />
+        <input type="file" accept="image/*" capture="environment" />
       </div>
 
-      <!-- Question -->
       <div class="field">
         <span>Why this moment matters <span class="req">*</span></span>
         <div class="muted">
@@ -54,19 +45,14 @@
         ></textarea>
       </div>
 
-      <!-- ✅ FIXED CHECKBOX (visible on desktop + mobile) -->
+      <!-- ✅ FIXED: native checkbox restored -->
       <div class="checkpoint-confirm">
-        <input
-          id="confirmLine"
-          type="checkbox"
-          class="checkpoint-checkbox"
-        />
+        <input id="confirmLine" type="checkbox" class="checkpoint-checkbox" />
         <label for="confirmLine">
           I understand this checkpoint is a line I cannot step back over.
         </label>
       </div>
 
-      <!-- Action -->
       <div class="actions">
         <a class="btn btn-danger" href="oath.html">CROSS THE LINE</a>
       </div>
@@ -74,9 +60,7 @@
     </section>
   </main>
 
-  <!-- Page-specific structural safety (NO visual theming yet) -->
   <style>
-    /* Checkbox wrapper — prevents global input styles from hijacking it */
     .checkpoint-confirm{
       display:flex;
       align-items:flex-start;
@@ -84,15 +68,22 @@
       margin-top:16px;
     }
 
+    /* ✅ Override global input appearance:none */
     .checkpoint-checkbox{
       width:18px;
       height:18px;
       margin-top:3px;
       flex-shrink:0;
+
+      appearance: auto !important;
+      -webkit-appearance: checkbox !important;
+      background: transparent !important;
+      border-radius: 4px;
+      cursor: pointer;
     }
 
     .checkpoint-confirm label{
-      font-weight:600; /* NOT bold */
+      font-weight:600; /* unbold */
       line-height:1.35;
       cursor:pointer;
     }
