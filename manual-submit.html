@@ -36,11 +36,15 @@
         </label>
 
         <label class="field">
-          <span>Checkpoint Proof (photo of completed checkpoint) <span class="req">*</span></span>
-          <input id="checkpoint" type="file" accept="image/png,image/jpeg,image/webp" />
-          <div class="muted">PNG/JPG/WEBP • Max 10MB</div>
+        <span>Checkpoint Proof (photo of completed checkpoint) <span class="req">*</span></span>
+        <input
+        id="checkpoint"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        />
+        <div class="muted">Camera photo preferred • Max 10MB</div>
         </label>
-      </div>
 
       <label class="field">
         <span>Question <span class="req">*</span></span>
