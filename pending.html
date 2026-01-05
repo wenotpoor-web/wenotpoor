@@ -2,21 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Pending Activation</title>
+  <title>Pending Activation · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/style.css" />
 </head>
-<body class="centered">
-  <main>
-    <h1>MEMBER AREA</h1>
-    <div class="divider"></div>
 
-    <p class="sub">
-      You crossed the line.<br />
-      Access is issued when the system is live.
-    </p>
+<body class="wnp">
+  <main class="wrap">
 
-    <span class="locked">STATUS: PENDING ACTIVATION</span>
+    <header class="hero">
+      <!-- Brand with red accent under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <h1>MEMBER AREA</h1>
+      <p class="sub">
+        You crossed the line.<br />
+        Access is issued when the system is live.
+      </p>
+    </header>
+
+    <!-- Centered, proportionate card -->
+    <section class="card" style="max-width:520px; text-align:center;">
+
+      <div class="status-pill pending">
+        STATUS: PENDING ACTIVATION
+      </div>
+
+      <p class="note" style="margin-top:16px;">
+        No guarantees. No promises.<br />
+        Only responsibility.
+      </p>
+
+    </section>
+
   </main>
+
+  <!-- Page-only styles -->
+  <style>
+    /* Brand accent under WE NOT */
+    .brand-wrap{
+      display:inline-flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .brand-offset{ align-items:flex-start; }
+    .brand-accent{
+      width:36px;
+      height:3px;
+      background:var(--danger,#FF2A2A);
+      border-radius:999px;
+      margin-left:2px;
+    }
+
+    /* Status pill */
+    .status-pill{
+      display:inline-block;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:900;
+      letter-spacing:.06em;
+      font-size:12px;
+      border:2px solid rgba(255,212,0,.75);
+      color:var(--textOnDark);
+      background:#000;
+    }
+    .status-pill.pending{
+      border-color:rgba(255,212,0,.75);
+    }
+  </style>
+
 </body>
 </html>
