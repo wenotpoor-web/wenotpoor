@@ -18,21 +18,25 @@
     }
 
     *{box-sizing:border-box}
+    html, body { height: 100%; }
     body{
       margin:0;
-      min-height:100vh;
       background:var(--bg);
       color:var(--yellow);
       font-family:var(--font);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:32px 18px;
+
+      /* ✅ MOBILE FIX:
+         Stop forcing vertical centering that can cause content to be clipped on short mobile viewports */
+      display:block;
+      padding:28px 14px 40px;
     }
 
-    .wrap{ width:min(980px, 100%); }
+    .wrap{
+      width:min(980px, 100%);
+      margin:0 auto;
+    }
 
-    /* Header (matches WNP theme: WE NOT + red accent line) */
+    /* Header */
     .hero{
       margin:0 0 16px 0;
       text-align:left;
@@ -89,7 +93,7 @@
       display:grid;
       grid-template-columns: 360px 1fr;
       gap:28px;
-      padding:28px;
+      padding:24px;
       align-items:center;
     }
 
@@ -97,7 +101,7 @@
     .book{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:12px;
       justify-content:flex-start;
     }
 
@@ -116,6 +120,7 @@
       justify-content:center;
       transition:transform .08s ease, background .15s ease, border-color .15s ease;
       user-select:none;
+      flex:0 0 auto;
     }
     .nav-btn:hover{
       background:rgba(255,212,0,.08);
@@ -138,6 +143,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      flex:0 0 auto;
     }
     .cover-frame img{
       width:100%;
@@ -172,12 +178,15 @@
       letter-spacing:.02em;
     }
 
+    /* ✅ MOBILE FIX:
+       remove tight max-width on very small screens to prevent awkward truncation */
     .desc{
       margin:0 0 12px 0;
       color:var(--text);
-      line-height:1.55;
+      line-height:1.6;
       font-size:15.5px;
       max-width: 54ch;
+      overflow-wrap:anywhere;
     }
 
     .meta{
@@ -208,6 +217,7 @@
       border:1px solid rgba(255,212,0,.7);
       transition:transform .08s ease, filter .15s ease;
       min-width:180px;
+      width:fit-content;
     }
     .btn:hover{ filter:brightness(1.06); }
     .btn:active{ transform:scale(.99); }
@@ -256,7 +266,7 @@
       opacity:.9;
     }
 
-    /* Lightbox (click cover to view larger) */
+    /* Lightbox */
     .lightbox{
       position:fixed;
       inset:0;
@@ -327,26 +337,64 @@
       text-transform:uppercase;
     }
 
-    /* Responsive */
+    /* ✅ MOBILE LAYOUT FIXES */
     @media (max-width: 860px){
       .hero{ text-align:center; }
       .brand-wrap{ align-items:center; }
+
       .card-body{
         grid-template-columns: 1fr;
-        gap:18px;
+        gap:16px;
+        padding:18px;
+        align-items:start;
       }
-      .book{ justify-content:center; }
-      .content{ text-align:center; }
-      .desc{ margin-left:auto; margin-right:auto; }
-      .actions{ align-items:center; }
-      .qty{ justify-content:center; }
+
+      .book{
+        justify-content:center;
+        gap:10px;
+      }
+
+      .cover-frame{
+        width:min(72vw, 300px); /* scales image area on phones */
+      }
+
+      .content{
+        text-align:center;
+      }
+
+      .title{
+        font-size:22px;
+      }
+
+      .desc{
+        max-width: none;        /* ✅ prevents narrow wrap/clipping feeling */
+        font-size:15px;
+      }
+
+      .actions{
+        align-items:center;
+      }
+
+      .btn{
+        width:100%;             /* ✅ full-width CTA on mobile */
+        max-width:360px;
+      }
+
+      .qty{
+        width:100%;
+        max-width:360px;
+        justify-content:space-between;
+      }
+
+      .qty select{
+        width:140px;
+      }
     }
   </style>
 </head>
 
 <body>
   <main class="wrap">
-    <!-- Header (WNP style) -->
     <header class="hero" aria-label="Page header">
       <div class="brand-wrap">
         <span class="brand">WE NOT POOR</span>
@@ -462,14 +510,12 @@
     prev.addEventListener("click", () => go(-1));
     next.addEventListener("click", () => go(1));
 
-    // Open lightbox with current cover (click on cover)
     function openLightbox() {
       lightboxImg.src = covers[idx].src;
       lightboxImg.alt = covers[idx].alt;
       lightboxCaption.textContent = covers[idx].label + " Cover";
       lightbox.classList.add("open");
       lightbox.setAttribute("aria-hidden", "false");
-      // Prevent background scroll while open
       document.body.style.overflow = "hidden";
     }
 
@@ -480,22 +526,17 @@
       document.body.style.overflow = "";
     }
 
-    // Clicking the cover opens larger preview (instead of flipping)
     img.addEventListener("click", openLightbox);
 
-    // Close behaviors
     lightboxClose.addEventListener("click", closeLightbox);
     lightbox.addEventListener("click", (e) => {
-      // Click outside the card closes
       if (e.target === lightbox) closeLightbox();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && lightbox.classList.contains("open")) closeLightbox();
     });
 
-    // Quantity selector behavior:
-    // If your Stripe Payment Link has "Adjustable quantity" enabled, the customer can set qty in Checkout.
-    // This keeps your page UI consistent and (optionally) passes qty as a query param for tracking.
+    // Quantity selector behavior (tracking param only)
     const baseHref = buyBtn.getAttribute("href");
     function updateBuyLink(){
       const q = qty.value || "1";
@@ -505,7 +546,6 @@
     qty.addEventListener("change", updateBuyLink);
     updateBuyLink();
 
-    // Initial render
     render();
   </script>
 </body>
