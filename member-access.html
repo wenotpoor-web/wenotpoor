@@ -5,14 +5,13 @@
   <title>Member Login · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- ✅ Use relative path to avoid 404/path issues on Pages -->
-  <link rel="stylesheet" href="style.css?v=wnp14" />
+  <link rel="stylesheet" href="style.css?v=wnp15" />
 </head>
 
 <body class="wnp">
   <main class="wrap">
 
     <header class="hero">
-      <!-- accent under WE NOT -->
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -24,23 +23,56 @@
 
     <section class="card login-card">
       <form id="loginForm" novalidate>
-
-        <!-- centered column wrapper -->
         <div class="login-col">
 
           <div class="field">
             <span>EMAIL <span class="req">*</span></span>
-            <input id="email" name="email" type="email" autocomplete="email" required />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="Enter email"
+              inputmode="email"
+            />
           </div>
 
           <div class="field">
             <span>PASSWORD <span class="req">*</span></span>
-            <input id="password" name="password" type="password" autocomplete="current-password" required />
+
+            <!-- ✅ password wrapper so we can place the eye icon inside -->
+            <div class="pw-wrap">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                placeholder="Enter Password"
+              />
+
+              <!-- ✅ Eye toggle -->
+              <button
+                id="togglePw"
+                class="pw-toggle"
+                type="button"
+                aria-label="Show password"
+                title="Show password"
+              >
+                <!-- inline SVG (no external libs) -->
+                <svg id="eyeOpen" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path fill="currentColor" d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                </svg>
+                <svg id="eyeClosed" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="display:none">
+                  <path fill="currentColor" d="M3.28 2.22 2.22 3.28l3.03 3.03C3.3 7.94 2 10 2 10s3 7 10 7c2.07 0 3.87-.55 5.35-1.35l3.37 3.37 1.06-1.06L3.28 2.22ZM12 15c-3.94 0-6.46-3.44-7.48-5 0 0 .81-1.39 2.36-2.7l1.67 1.67A5 5 0 0 0 15.03 15.5l1.59 1.59c-1.21.57-2.68.91-4.62.91Zm9.48-5S18.97 5 12 5c-1.44 0-2.74.24-3.89.63l1.7 1.7A4.98 4.98 0 0 1 12 7a5 5 0 0 1 5 5c0 .76-.17 1.48-.47 2.12l1.82 1.82c1.98-1.56 3.13-3.94 3.13-3.94ZM12 9.5c-.23 0-.45.03-.66.08l3.08 3.08c.05-.21.08-.43.08-.66A2.5 2.5 0 0 0 12 9.5Z"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <!-- Buttons: smaller + separated -->
           <div class="actions actions-stack">
-            <button class="btn btn-sm" type="submit">LOG IN</button>
+            <button id="loginBtn" class="btn btn-sm" type="submit">LOG IN</button>
             <a class="btn ghost btn-sm" href="index.html">BACK</a>
           </div>
 
@@ -57,7 +89,6 @@
   </main>
 
   <style>
-    /* Card proportions like screenshot */
     .login-card{
       max-width: 640px;
       padding: 26px 28px 28px;
@@ -65,7 +96,6 @@
       margin-right: auto;
     }
 
-    /* ✅ Center ALL content as a single column */
     .login-col{
       width: 100%;
       max-width: 360px;
@@ -92,6 +122,39 @@
       padding: 14px 18px;
       background:#000;
       color: rgba(255,212,0,.92);
+      outline: none;
+    }
+
+    .login-card input::placeholder{
+      color: rgba(255,212,0,.55);
+    }
+
+    /* ✅ password eye */
+    .pw-wrap{
+      position: relative;
+      width: 100%;
+    }
+    .pw-wrap input{
+      padding-right: 52px; /* make room for the eye */
+    }
+    .pw-toggle{
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,212,0,.25);
+      background: rgba(255,212,0,.06);
+      color: rgba(255,212,0,.85);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .pw-toggle:active{
+      transform: translateY(-50%) scale(.98);
     }
 
     .actions-stack{
@@ -119,14 +182,27 @@
       margin-top: 14px;
       text-align: center;
     }
+
+    /* optional: disabled state */
+    .btn[disabled]{
+      opacity: .65;
+      cursor: not-allowed;
+    }
   </style>
 
   <script>
-    const LOGIN_ENDPOINT = "/api/auth/login";
+    // ✅ Use the new alias from the Worker
+    const LOGIN_ENDPOINT = "/api/login";
     const ME_ENDPOINT = "/api/me";
 
     const form = document.getElementById("loginForm");
     const result = document.getElementById("result");
+    const loginBtn = document.getElementById("loginBtn");
+
+    const pw = document.getElementById("password");
+    const togglePw = document.getElementById("togglePw");
+    const eyeOpen = document.getElementById("eyeOpen");
+    const eyeClosed = document.getElementById("eyeClosed");
 
     function show(msg, isErr = false) {
       result.style.display = "block";
@@ -134,6 +210,12 @@
       result.textContent = msg;
     }
 
+    function setBusy(isBusy) {
+      loginBtn.disabled = !!isBusy;
+      loginBtn.textContent = isBusy ? "CHECKING…" : "LOG IN";
+    }
+
+    // ✅ Route logic updated to honor Worker "effective_oath_accepted"
     function routeFromMe(me) {
       const status = String(me?.status || "").toLowerCase();
 
@@ -141,13 +223,32 @@
       if (status === "pending") return "/decision.html";
       if (status === "suspended") return "/decision.html";
 
-      const oathAccepted = !!me?.oath_accepted_at;
+      const oathAccepted =
+        !!me?.effective_oath_accepted || !!me?.oath_accepted_at;
+
       const firstName = String(me?.first_name || "").trim();
 
+      // If approved/auto_approved and oath not done -> oath
       if (!oathAccepted) return "/oath.html";
+
+      // If active and missing name -> name page
       if (!firstName) return "/name.html";
+
       return "/member-area.html";
     }
+
+    // ✅ Password eye toggle
+    togglePw.addEventListener("click", () => {
+      const isHidden = pw.type === "password";
+      pw.type = isHidden ? "text" : "password";
+
+      eyeOpen.style.display = isHidden ? "none" : "block";
+      eyeClosed.style.display = isHidden ? "block" : "none";
+
+      togglePw.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+      togglePw.title = isHidden ? "Hide password" : "Show password";
+      pw.focus();
+    });
 
     // ✅ Auto-skip login if already authenticated
     (async () => {
@@ -163,8 +264,9 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const email = document.getElementById("email").value.trim().toLowerCase();
-      const password = document.getElementById("password").value;
+      const emailEl = document.getElementById("email");
+      const email = emailEl.value.trim().toLowerCase();
+      const password = pw.value;
 
       if (!email || !password) {
         show("Email and password are required.", true);
@@ -172,6 +274,7 @@
       }
 
       try {
+        setBusy(true);
         show("Checking…");
 
         const res = await fetch(LOGIN_ENDPOINT, {
@@ -184,6 +287,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           show(data?.error || data?.message || "Login failed.", true);
+          setBusy(false);
           return;
         }
 
@@ -192,12 +296,14 @@
 
         if (!meRes.ok || !me?.authenticated) {
           show("Login succeeded, but session was not established.", true);
+          setBusy(false);
           return;
         }
 
         window.location.href = routeFromMe(me);
       } catch (_) {
         show("Network error. Try again.", true);
+        setBusy(false);
       }
     });
   </script>
