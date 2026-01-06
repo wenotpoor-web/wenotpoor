@@ -105,80 +105,103 @@
     }
   </style>
 
-  <script>
-    const API_BASE = "https://wenotpoor.com";
+<script>
+  // ✅ Use same-origin relative URLs to avoid cookie/CORS headaches
+  const API = "";
 
-    function setMsg(text, isError = true) {
-      const el = document.getElementById("msg");
-      el.textContent = text || "";
-      // Use your theme colors via CSS if you have them; this is a safe fallback.
-      el.style.color = isError ? "var(--danger, #FF2A2A)" : "var(--textOnDark, #FFD400)";
+  function setMsg(text, isError = true) {
+    const el = document.getElementById("msg");
+    el.textContent = text || "";
+    el.style.color = isError ? "var(--danger, #FF2A2A)" : "var(--textOnDark, #FFD400)";
+  }
+
+  function normalizeCode(v) {
+    return String(v || "").trim().toUpperCase();
+  }
+
+  function normalizeEmail(v) {
+    return String(v || "").trim().toLowerCase();
+  }
+
+  // ✅ Authoritative router based on Worker progress fields
+  function routeAfterRedeem(data, email) {
+    // If your Worker returns a direct next_step, honor it.
+    // Otherwise infer from the flags (most robust).
+    const needsPassword = !!data.needs_password;
+    const needsOath = !!data.needs_oath;
+    const needsFirstName = !!data.needs_first_name;
+
+    // If they are already registered, do NOT send them to checkpoint again.
+    if (data.already_registered) {
+      // If they still need password setup, go there
+      if (needsPassword) return `email-setup.html?email=${encodeURIComponent(email)}`;
+
+      // If they can login, send to login (or directly to member-access if you prefer)
+      // Login is safer because it ensures they have a session cookie.
+      return `login.html?email=${encodeURIComponent(email)}`;
     }
 
-    function normalizeCode(v) {
-      return String(v || "").trim().toUpperCase();
+    // New redemption path (auto-approved member created)
+    // Your locked flow: redeem -> checkpoint (proof) -> email setup -> oath -> name -> member access
+    // However: if Worker indicates they already have password, skip email-setup.
+    if (!needsPassword) {
+      // If password already exists, they can login and proceed from there
+      // (login will route them onward based on /api/me)
+      return `login.html?email=${encodeURIComponent(email)}`;
     }
 
-    function normalizeEmail(v) {
-      return String(v || "").trim().toLowerCase();
-    }
+    // Default new path: go to checkpoint next
+    return `checkpoint.html?email=${encodeURIComponent(email)}`;
+  }
 
-    async function redeem() {
-      setMsg("");
+  async function redeem() {
+    setMsg("");
 
-      const code = normalizeCode(document.getElementById("code").value);
-      const email = normalizeEmail(document.getElementById("email").value);
+    const code = normalizeCode(document.getElementById("code").value);
+    const email = normalizeEmail(document.getElementById("email").value);
 
-      if (!code) return setMsg("Book code required.");
-      if (!/^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) return setMsg("Code format must be WNP-XXXX-XXXX.");
-      if (!email) return setMsg("Email required.");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setMsg("Enter a valid email.");
+    if (!code) return setMsg("Book code required.");
+    if (!/^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) return setMsg("Code format must be WNP-XXXX-XXXX.");
+    if (!email) return setMsg("Email required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setMsg("Enter a valid email.");
 
-      const btn = document.getElementById("continueBtn");
-      btn.disabled = true;
-      btn.textContent = "VERIFYING...";
+    const btn = document.getElementById("continueBtn");
+    btn.disabled = true;
+    btn.textContent = "VERIFYING...";
 
-      try {
-        const r = await fetch(`${API_BASE}/api/book-codes/redeem`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, email })
-        });
+    try {
+      const r = await fetch(`${API}/api/book-codes/redeem`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // ✅ keep cookies if your Worker ever sets any during this step
+        credentials: "include",
+        body: JSON.stringify({ code, email })
+      });
 
-        const data = await r.json().catch(() => ({}));
+      const data = await r.json().catch(() => ({}));
 
-        if (!r.ok) {
-          // Expected cases:
-          // 400 invalid code, 409 already used, 403 denied
-          setMsg(data.error || "Could not verify code.");
-          btn.disabled = false;
-          btn.textContent = "CONTINUE";
-          return;
-        }
-
-        // ✅ Success: you’re now auto_approved (per API)
-        // Next step in your flow is checkpoint.html
-        // We can optionally pass the email forward for convenience.
-        const next = `checkpoint.html?email=${encodeURIComponent(email)}`;
-        window.location.href = next;
-
-      } catch (e) {
-        setMsg("Network error. Try again.");
+      if (!r.ok) {
+        setMsg(data.error || "Could not verify code.");
         btn.disabled = false;
         btn.textContent = "CONTINUE";
+        return;
       }
+
+      // ✅ Route based on actual state/progress returned by the Worker
+      const next = routeAfterRedeem(data, email);
+      window.location.href = next;
+
+    } catch (e) {
+      setMsg("Network error. Try again.");
+      btn.disabled = false;
+      btn.textContent = "CONTINUE";
     }
+  }
 
-    document.getElementById("continueBtn").addEventListener("click", redeem);
-
-    // Enter key submits (either field)
-    document.getElementById("code").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") redeem();
-    });
-    document.getElementById("email").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") redeem();
-    });
-  </script>
+  document.getElementById("continueBtn").addEventListener("click", redeem);
+  document.getElementById("code").addEventListener("keydown", (e) => { if (e.key === "Enter") redeem(); });
+  document.getElementById("email").addEventListener("keydown", (e) => { if (e.key === "Enter") redeem(); });
+</script>
 
 </body>
 </html>
