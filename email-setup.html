@@ -3,17 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>We Not Poor — Email & Password</title>
-
-  <!-- APPLY SITE THEME -->
-  <link rel="stylesheet" href="style.css" />
+  <title>Email & Password Setup · WE NOT POOR</title>
+  <link rel="stylesheet" href="style.css?v=wnp16" />
 </head>
 
 <body class="wnp">
   <main class="wrap">
 
     <header class="hero">
-      <!-- ✅ Brand with red accent line under WE NOT -->
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -28,9 +25,8 @@
     <!-- STEP 1 -->
     <section class="card">
       <div class="card-h">
-        <div class="card-title">STEP 1 — CONFIRM EMAIL</div>
-        <!-- ✅ API status hidden -->
-        <div class="pill" id="apiPill" style="display:none;"></div>
+        <div class="card-title">STEP 1 — VERIFY EMAIL</div>
+        <div class="muted" id="sendLimitHint" style="display:none;"></div>
       </div>
 
       <div class="grid-2">
@@ -45,14 +41,13 @@
         </div>
       </div>
 
-      <div class="actions">
+      <div class="actions" style="gap:12px; flex-wrap:wrap;">
         <button class="btn" id="sendTemp" type="button">Send temporary password</button>
-        <!-- ✅ Reset button removed -->
+        <button class="btn ghost" id="editEmail" type="button" style="display:none;">Edit email</button>
       </div>
 
-      <!-- ✅ Temp password example note removed -->
-
       <div class="result err" id="step1Err" style="display:none;"></div>
+      <div class="result" id="step1Ok" style="display:none;"></div>
     </section>
 
     <!-- STEP 2 -->
@@ -70,25 +65,25 @@
 
         <div class="field">
           <span>New Password</span>
-          <input id="pw" type="password" placeholder="••••••••" autocomplete="new-password" />
+          <input id="pw" type="password" placeholder="Enter New Password" autocomplete="new-password" />
         </div>
 
         <div class="field">
           <span>Confirm New Password</span>
-          <input id="pw2" type="password" placeholder="••••••••" autocomplete="new-password" />
+          <input id="pw2" type="password" placeholder="Retype New Password" autocomplete="new-password" />
         </div>
 
-        <!-- ✅ Mode UI hidden (but still present for script compatibility) -->
+        <!-- keep hidden but available -->
         <div class="field" style="display:none;">
           <span>Mode</span>
           <div class="mode">
             <label class="radio">
               <input type="radio" name="mode" value="manual" checked />
-              <span>Manual approval (receipt)</span>
+              <span>Manual approval</span>
             </label>
             <label class="radio">
               <input type="radio" name="mode" value="auto" />
-              <span>Auto approval (book code)</span>
+              <span>Auto approval</span>
             </label>
           </div>
         </div>
@@ -96,51 +91,52 @@
 
       <div class="actions">
         <button class="btn" id="confirmPw" type="button">Set password &amp; continue</button>
+        <a class="btn ghost" href="index.html">BACK</a>
       </div>
 
       <pre class="result" id="result">Waiting…</pre>
     </section>
 
-    <!-- ✅ Footer centered, copyright removed -->
     <footer class="foot foot-center">
       <span class="muted">Membership is not open. It is earned.</span>
     </footer>
   </main>
 
-  <!-- ✅ Red accent line under WE NOT (page-safe in case CSS missing it) -->
   <style>
-    .brand-wrap{
-      display:inline-flex;
-      flex-direction:column;
-      gap:4px;
-    }
+    .brand-wrap{ display:inline-flex; flex-direction:column; gap:4px; }
     .brand-offset{ align-items:flex-start; }
     .brand-accent{
-      display:block;
-      width:36px;
-      height:3px;
+      display:block; width:36px; height:3px;
       background: var(--danger, #FF2A2A);
-      border-radius:999px;
-      margin-left:2px;
+      border-radius:999px; margin-left:2px;
     }
   </style>
 
   <script>
-    const API = "https://wenotpoor-api.wenotpoor.workers.dev";
+    // ✅ Same-origin endpoints (prevents cross-domain cookie/CORS issues)
+    const TEMP_REQUEST = "/api/auth/temp-password/request";
+    const TEMP_CONFIRM = "/api/auth/temp-password/confirm";
 
     const $ = (id) => document.getElementById(id);
+
     const result = $("result");
+    const step1Err = $("step1Err");
+    const step1Ok = $("step1Ok");
+    const sendLimitHint = $("sendLimitHint");
 
     function setResult(msg, isErr=false) {
       result.textContent = msg;
       result.classList.toggle("err", !!isErr);
     }
-
     function setStep1Err(msg="") {
-      const el = $("step1Err");
-      if (!msg) { el.style.display = "none"; el.textContent = ""; return; }
-      el.style.display = "block";
-      el.textContent = msg;
+      if (!msg) { step1Err.style.display="none"; step1Err.textContent=""; return; }
+      step1Err.style.display="block";
+      step1Err.textContent=msg;
+    }
+    function setStep1Ok(msg="") {
+      if (!msg) { step1Ok.style.display="none"; step1Ok.textContent=""; return; }
+      step1Ok.style.display="block";
+      step1Ok.textContent=msg;
     }
 
     function modeValue() {
@@ -148,63 +144,152 @@
       return sel ? sel.value : "manual";
     }
 
-    function pullCarryover() {
+    // ======= staged payload handling =======
+    // You already used wnp_payload. We'll support it AND also fold in checkpoint keys we stored.
+    function pullPayload() {
       const raw = sessionStorage.getItem("wnp_payload");
-      if (!raw) return null;
-      try { return JSON.parse(raw); } catch { return null; }
+      if (!raw) return {};
+      try { return JSON.parse(raw) || {}; } catch { return {}; }
+    }
+    function savePayload(obj) {
+      sessionStorage.setItem("wnp_payload", JSON.stringify(obj || {}));
     }
 
-    // ✅ Health check still runs (optional) but UI is hidden
-    async function health() {
-      try {
-        const r = await fetch(API + "/api/health", { credentials: "include" });
-        const ok = r.ok;
-        $("apiPill").textContent = ok ? "API: online" : "API: offline";
-        $("apiPill").classList.toggle("good", ok);
-      } catch {
-        $("apiPill").textContent = "API: offline";
-        $("apiPill").classList.remove("good");
+    function mergeCheckpointCarryover(payload) {
+      // from checkpoint.html drop-in we created
+      const ckKey = sessionStorage.getItem("wnp_checkpoint_key") || "";
+      const ckAns = sessionStorage.getItem("wnp_checkpoint_answer") || "";
+      const ckOk  = sessionStorage.getItem("wnp_checkpoint_confirmed") === "true";
+
+      // keep your existing staged structure open-ended
+      if (ckKey) payload.checkpoint_key = ckKey;
+      if (ckAns) payload.answer = ckAns;
+      if (ckOk)  payload.confirmed = true;
+
+      return payload;
+    }
+
+    function loadEmailCarryover() {
+      const ss = (sessionStorage.getItem("wnp_email") || "").trim();
+      const ls = (localStorage.getItem("wnp_email") || "").trim();
+      const p = pullPayload();
+      const pe = (p.email || "").trim();
+      return (pe || ss || ls || "");
+    }
+
+    // ======= send limit (3 per browser session) =======
+    function getSendCount() {
+      return parseInt(sessionStorage.getItem("wnp_temp_send_count") || "0", 10) || 0;
+    }
+    function incSendCount() {
+      const n = getSendCount() + 1;
+      sessionStorage.setItem("wnp_temp_send_count", String(n));
+      return n;
+    }
+    function updateSendLimitUI() {
+      const n = getSendCount();
+      const remaining = Math.max(0, 3 - n);
+      sendLimitHint.style.display = "block";
+      sendLimitHint.textContent = `Temporary password sends remaining: ${remaining}/3`;
+      if (remaining <= 0) {
+        $("sendTemp").disabled = true;
+        $("sendTemp").classList.add("btn-disabled");
       }
     }
-    health();
 
+    // ======= email lock/edit =======
+    function lockEmailFields(locked) {
+      $("email").readOnly = locked;
+      $("email2").readOnly = locked;
+      $("editEmail").style.display = locked ? "inline-flex" : "none";
+    }
+
+    $("editEmail").onclick = () => {
+      setStep1Err("");
+      setStep1Ok("");
+      lockEmailFields(false);
+      setResult("Edit your email, then send a new temporary password.");
+    };
+
+    // ======= init =======
+    (function init() {
+      const carryEmail = loadEmailCarryover();
+      if (carryEmail) {
+        $("email").value = carryEmail;
+        $("email2").value = carryEmail;
+      }
+      updateSendLimitUI();
+      setResult("Waiting…");
+    })();
+
+    // STEP 1 — Send temporary password
     $("sendTemp").onclick = async () => {
       setStep1Err("");
-      const email = $("email").value.trim();
-      const email2 = $("email2").value.trim();
+      setStep1Ok("");
+
+      const email = $("email").value.trim().toLowerCase();
+      const email2 = $("email2").value.trim().toLowerCase();
 
       if (!email || !email2) { setStep1Err("Enter email twice."); return setResult("Enter email twice.", true); }
       if (email !== email2) { setStep1Err("Emails do not match."); return setResult("Emails do not match.", true); }
 
-      setResult("Sending temporary password…");
-
-      const payload = pullCarryover() || {};
-      payload.email = email;
-      payload.mode = modeValue();
-      sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
-
-      const r = await fetch(API + "/api/auth/temp-password/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-        credentials: "include"
-      });
-
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setStep1Err(data.error || "Failed to send temp password.");
-        return setResult(data.error || "Failed to send temp password.", true);
+      const sends = getSendCount();
+      if (sends >= 3) {
+        setStep1Err("Send limit reached (3). Try again later or use a different browser session.");
+        return setResult("Send limit reached.", true);
       }
 
-      setResult("Temporary password sent. Check your inbox (and spam).");
+      setResult("Sending temporary password…");
+
+      // persist payload + email for later steps/pages
+      let payload = pullPayload();
+      payload.email = email;
+      payload.mode = payload.mode || modeValue(); // keep staged if already set
+      payload = mergeCheckpointCarryover(payload);
+      savePayload(payload);
+
+      sessionStorage.setItem("wnp_email", email);
+      localStorage.setItem("wnp_email", email);
+
+      try {
+        const r = await fetch(TEMP_REQUEST, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email })
+        });
+
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          setStep1Err(data.error || "Failed to send temp password.");
+          return setResult(data.error || "Failed to send temp password.", true);
+        }
+
+        const n = incSendCount();
+        updateSendLimitUI();
+
+        // after first send, lock email fields unless they click "Edit email"
+        lockEmailFields(true);
+
+        setStep1Ok("Temporary password sent. Check your inbox (and spam).");
+        setResult(`Temporary password sent. (${Math.max(0, 3 - n)}/3 remaining)`);
+      } catch (e) {
+        setStep1Err("Network error sending email. Try again.");
+        setResult("Network error. Try again.", true);
+      }
     };
 
+    // STEP 2 — Confirm temp + set new password
     $("confirmPw").onclick = async () => {
-      const email = $("email").value.trim();
+      const email = $("email").value.trim().toLowerCase();
       const temp = $("temp").value.trim();
       const pw = $("pw").value;
       const pw2 = $("pw2").value;
-      const mode = modeValue();
+
+      let payload = pullPayload();
+      payload = mergeCheckpointCarryover(payload);
+
+      const mode = String(payload.mode || modeValue() || "manual").toLowerCase();
 
       if (!email) return setResult("Enter your email.", true);
       if (!temp) return setResult("Enter the temporary password you received.", true);
@@ -218,32 +303,47 @@
 
       setResult("Setting password…");
 
-      const staged = pullCarryover() || {};
-      const r = await fetch(API + "/api/auth/temp-password/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          temp_password: temp,
-          new_password: pw,
-          mode,
-          staged
-        }),
-        credentials: "include"
-      });
+      try {
+        const r = await fetch(TEMP_CONFIRM, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email,
+            temp_password: temp,
+            new_password: pw,
+            mode,
+            staged: payload
+          })
+        });
 
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) return setResult(data.error || "Failed to set password.", true);
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) return setResult(data.error || "Failed to set password.", true);
 
-      sessionStorage.removeItem("wnp_payload");
+        // cleanup staged payload (keep email)
+        sessionStorage.removeItem("wnp_payload");
 
-      // ROUTING (use your real filenames)
-      if (mode === "manual") {
-        window.location.href = "/decision.html";
-      } else {
-        window.location.href = "/oath.html";
+        // ROUTING
+        // manual -> decision pending
+        if (mode === "manual") {
+          window.location.href = "decision.html";
+          return;
+        }
+
+        // auto -> go to canonical router (member-access) which will route to oath/name/member-area
+        window.location.href = "member-access.html";
+      } catch (e) {
+        setResult("Network error. Try again.", true);
       }
     };
   </script>
+
+  <style>
+    .btn-disabled{
+      opacity:.45;
+      filter: grayscale(35%);
+      cursor:not-allowed !important;
+    }
+  </style>
 </body>
 </html>
