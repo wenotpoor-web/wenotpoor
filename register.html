@@ -29,7 +29,6 @@
       </p>
     </header>
 
-    <!-- ✅ Card now proportionate to content -->
     <section class="card register-card">
 
       <div class="field book-code-field">
@@ -42,10 +41,24 @@
         />
       </div>
 
+      <!-- ✅ Email required by the API -->
+      <div class="field book-code-field" style="margin-top:14px;">
+        <span>Email <span class="req">*</span></span>
+        <input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+      </div>
+
       <div class="actions actions-stack">
-        <a class="btn" href="checkpoint.html">CONTINUE</a>
+        <!-- ✅ real button now -->
+        <button class="btn" id="continueBtn" type="button">CONTINUE</button>
         <a class="btn ghost" href="member.html">BACK</a>
       </div>
+
+      <p id="msg" class="note center-note" style="min-height:18px;"></p>
 
       <p class="note center-note">
         One copy. One entry. Not transferable.
@@ -55,17 +68,14 @@
 
   </main>
 
-  <!-- ✅ Page-scoped layout tuning only -->
   <style>
-    /* Card hugs the form instead of full width */
     .register-card{
-      max-width: 520px;   /* visually balanced with input */
+      max-width: 520px;
       margin-left: auto;
       margin-right: auto;
       padding: 22px 20px 24px;
     }
 
-    /* Input field proportion */
     .book-code-field{
       max-width: 420px;
       margin-left: auto;
@@ -76,7 +86,6 @@
       width:100%;
     }
 
-    /* Stack buttons cleanly */
     .actions-stack{
       display:flex;
       flex-direction:column;
@@ -85,22 +94,91 @@
       align-items:center;
     }
 
-    /* Center the fine print */
     .center-note{
       text-align:center;
       margin-top:14px;
     }
 
-    /* Mobile: relax constraints for usability */
     @media (max-width: 520px){
-      .register-card{
-        max-width: 100%;
-      }
-      .book-code-field{
-        max-width: 100%;
-      }
+      .register-card{ max-width: 100%; }
+      .book-code-field{ max-width: 100%; }
     }
   </style>
+
+  <script>
+    const API_BASE = "https://wenotpoor.com";
+
+    function setMsg(text, isError = true) {
+      const el = document.getElementById("msg");
+      el.textContent = text || "";
+      // Use your theme colors via CSS if you have them; this is a safe fallback.
+      el.style.color = isError ? "var(--danger, #FF2A2A)" : "var(--textOnDark, #FFD400)";
+    }
+
+    function normalizeCode(v) {
+      return String(v || "").trim().toUpperCase();
+    }
+
+    function normalizeEmail(v) {
+      return String(v || "").trim().toLowerCase();
+    }
+
+    async function redeem() {
+      setMsg("");
+
+      const code = normalizeCode(document.getElementById("code").value);
+      const email = normalizeEmail(document.getElementById("email").value);
+
+      if (!code) return setMsg("Book code required.");
+      if (!/^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) return setMsg("Code format must be WNP-XXXX-XXXX.");
+      if (!email) return setMsg("Email required.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setMsg("Enter a valid email.");
+
+      const btn = document.getElementById("continueBtn");
+      btn.disabled = true;
+      btn.textContent = "VERIFYING...";
+
+      try {
+        const r = await fetch(`${API_BASE}/api/book-codes/redeem`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, email })
+        });
+
+        const data = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+          // Expected cases:
+          // 400 invalid code, 409 already used, 403 denied
+          setMsg(data.error || "Could not verify code.");
+          btn.disabled = false;
+          btn.textContent = "CONTINUE";
+          return;
+        }
+
+        // ✅ Success: you’re now auto_approved (per API)
+        // Next step in your flow is checkpoint.html
+        // We can optionally pass the email forward for convenience.
+        const next = `checkpoint.html?email=${encodeURIComponent(email)}`;
+        window.location.href = next;
+
+      } catch (e) {
+        setMsg("Network error. Try again.");
+        btn.disabled = false;
+        btn.textContent = "CONTINUE";
+      }
+    }
+
+    document.getElementById("continueBtn").addEventListener("click", redeem);
+
+    // Enter key submits (either field)
+    document.getElementById("code").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") redeem();
+    });
+    document.getElementById("email").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") redeem();
+    });
+  </script>
 
 </body>
 </html>
