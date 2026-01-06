@@ -1,98 +1,205 @@
-<script>
-  const LOGIN_ENDPOINT = "/api/login";
-  const ME_ENDPOINT = "/api/me";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Member Login · WE NOT POOR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- ✅ Use relative path to avoid 404/path issues on Pages -->
+  <link rel="stylesheet" href="style.css?v=wnp14" />
+</head>
 
-  const form = document.getElementById("loginForm");
-  const result = document.getElementById("result");
+<body class="wnp">
+  <main class="wrap">
 
-  function show(msg, isErr = false) {
-    result.style.display = "block";
-    result.className = isErr ? "result err" : "result";
-    result.textContent = msg;
-  }
+    <header class="hero">
+      <!-- accent under WE NOT -->
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
 
-  // ✅ Authoritative router based on /api/me (locked flow)
-  function routeFromMe(me) {
-    const status = String(me?.status || "").toLowerCase();
+      <h1>MEMBER ACCESS</h1>
+      <p class="sub">If you were approved, you enter.<br />If you weren’t, the system tells you why.</p>
+    </header>
 
-    if (status === "denied") return "/denied.html";
-    if (status === "pending") return "/decision.html";
-    if (status === "suspended") return "/decision.html"; // optional dedicated page later
+    <section class="card login-card">
+      <form id="loginForm" novalidate>
 
-    // Active/approved flow gates
-    const oathAccepted = !!me?.oath_accepted_at;
-    const firstName = String(me?.first_name || "").trim();
+        <!-- centered column wrapper -->
+        <div class="login-col">
 
-    if (!oathAccepted) return "/oath.html";
-    if (!firstName) return "/name.html";
-    return "/member-area.html"; // ✅ protected content page
-  }
+          <div class="field">
+            <span>EMAIL <span class="req">*</span></span>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
 
-  // ✅ Auto-skip login if already authenticated (runs once on page load)
-  (async () => {
-    try {
-      const meRes = await fetch(ME_ENDPOINT, { credentials: "include" });
-      if (meRes.ok) {
-        const me = await meRes.json().catch(() => ({}));
-        if (me?.authenticated) {
-          window.location.href = routeFromMe(me);
+          <div class="field">
+            <span>PASSWORD <span class="req">*</span></span>
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+          </div>
+
+          <!-- Buttons: smaller + separated -->
+          <div class="actions actions-stack">
+            <button class="btn btn-sm" type="submit">LOG IN</button>
+            <a class="btn ghost btn-sm" href="index.html">BACK</a>
+          </div>
+
+          <div id="result" class="result" style="display:none;"></div>
+
+          <div class="below-links">
+            <a class="link-item" href="forgot.html">Forgot password?</a>
+          </div>
+
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <style>
+    /* Card proportions like screenshot */
+    .login-card{
+      max-width: 640px;
+      padding: 26px 28px 28px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ✅ Center ALL content as a single column */
+    .login-col{
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .field{
+      margin: 18px 0;
+      gap: 10px;
+    }
+
+    .field > span{
+      font-size: 13px;
+      letter-spacing: .12em;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .login-card input{
+      width: 100%;
+      height: 56px;
+      border-radius: 18px;
+      border: 2px solid rgba(255,212,0,.75);
+      padding: 14px 18px;
+      background:#000;
+      color: rgba(255,212,0,.92);
+    }
+
+    .actions-stack{
+      display:flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 22px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-sm{
+      min-width: 150px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .below-links{
+      margin-top: 14px;
+      text-align: center;
+    }
+  </style>
+
+  <script>
+    const LOGIN_ENDPOINT = "/api/login";
+    const ME_ENDPOINT = "/api/me";
+
+    const form = document.getElementById("loginForm");
+    const result = document.getElementById("result");
+
+    function show(msg, isErr = false) {
+      result.style.display = "block";
+      result.className = isErr ? "result err" : "result";
+      result.textContent = msg;
+    }
+
+    function routeFromMe(me) {
+      const status = String(me?.status || "").toLowerCase();
+
+      if (status === "denied") return "/denied.html";
+      if (status === "pending") return "/decision.html";
+      if (status === "suspended") return "/decision.html";
+
+      const oathAccepted = !!me?.oath_accepted_at;
+      const firstName = String(me?.first_name || "").trim();
+
+      if (!oathAccepted) return "/oath.html";
+      if (!firstName) return "/name.html";
+      return "/member-area.html";
+    }
+
+    // ✅ Auto-skip login if already authenticated
+    (async () => {
+      try {
+        const meRes = await fetch(ME_ENDPOINT, { credentials: "include" });
+        if (meRes.ok) {
+          const me = await meRes.json().catch(() => ({}));
+          if (me?.authenticated) window.location.href = routeFromMe(me);
         }
-      }
-    } catch (_) {
-      // ignore
-    }
-  })();
+      } catch (_) {}
+    })();
 
-  // ✅ Login submit
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const password = document.getElementById("password").value;
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const password = document.getElementById("password").value;
 
-    if (!email || !password) {
-      show("Email and password are required.", true);
-      return;
-    }
-
-    try {
-      show("Checking…");
-
-      // 1) Login (sets session cookie)
-      const res = await fetch(LOGIN_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        const msg = data?.error || data?.message || "Login failed.";
-        show(msg, true);
+      if (!email || !password) {
+        show("Email and password are required.", true);
         return;
       }
 
-      // 2) Fetch /me (canonical state)
-      const meRes = await fetch(ME_ENDPOINT, { credentials: "include" });
-      const me = await meRes.json().catch(() => ({}));
+      try {
+        show("Checking…");
 
-      if (!meRes.ok) {
-        show(me?.error || "Login succeeded but session check failed.", true);
-        return;
+        const res = await fetch(LOGIN_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          show(data?.error || data?.message || "Login failed.", true);
+          return;
+        }
+
+        const meRes = await fetch(ME_ENDPOINT, { credentials: "include" });
+        const me = await meRes.json().catch(() => ({}));
+
+        if (!meRes.ok || !me?.authenticated) {
+          show("Login succeeded, but session was not established.", true);
+          return;
+        }
+
+        window.location.href = routeFromMe(me);
+      } catch (_) {
+        show("Network error. Try again.", true);
       }
-
-      if (!me?.authenticated) {
-        show("Login succeeded, but session was not established.", true);
-        return;
-      }
-
-      // 3) Route based on canonical state
-      window.location.href = routeFromMe(me);
-
-    } catch (err) {
-      show("Network error. Try again.", true);
-    }
-  });
-</script>
+    });
+  </script>
+</body>
+</html>
