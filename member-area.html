@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Member Area · WE NOT POOR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/style.css?v=wnp13" />
+</head>
+
+<body class="wnp">
+  <main class="wrap">
+
+    <header class="hero">
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+
+      <h1>MEMBER ACCESS</h1>
+      <p class="sub">
+        You crossed the line. This area is not public.
+      </p>
+    </header>
+
+    <section class="card member-card">
+      <div class="member-inner">
+
+        <h2 id="welcome">Welcome.</h2>
+
+        <p class="member-copy">
+          This is your private member area.  
+          No spectators. No validation. Only execution.
+        </p>
+
+        <div class="member-actions">
+          <a class="btn" href="/resources.html">ENTER RESOURCES</a>
+          <button class="btn ghost" id="logoutBtn">LOG OUT</button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <style>
+    .member-card{
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 28px 30px 30px;
+    }
+
+    .member-inner{
+      max-width: 520px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .member-inner h2{
+      margin-bottom: 12px;
+    }
+
+    .member-copy{
+      margin-top: 10px;
+      line-height: 1.6;
+      color: var(--muted, rgba(255,212,0,.78));
+    }
+
+    .member-actions{
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 26px;
+      align-items: center;
+    }
+  </style>
+
+  <script>
+    async function guard() {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        if (!res.ok) {
+          window.location.href = "/member-access.html";
+          return;
+        }
+
+        const me = await res.json();
+
+        // Hard gate
+        if (me.status !== "active") {
+          window.location.href = "/decision.html";
+          return;
+        }
+
+        // Flow gates
+        if (!me.oath_accepted_at) {
+          window.location.href = "/oath.html";
+          return;
+        }
+
+        if (!me.first_name) {
+          window.location.href = "/name.html";
+          return;
+        }
+
+        // Personalize
+        if (me.first_name) {
+          document.getElementById("welcome").textContent =
+            `Welcome, ${me.first_name}.`;
+        }
+
+      } catch (e) {
+        window.location.href = "/member-access.html";
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch("/api/logout", {
+          method: "POST",
+          credentials: "include"
+        });
+      } catch (_) {}
+      window.location.href = "/index.html";
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    // Run guard immediately
+    guard();
+  </script>
+</body>
+</html>
