@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Checkpoint</title>
+  <title>Checkpoint · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/style.css" />
+  <!-- Use relative path to avoid routing quirks -->
+  <link rel="stylesheet" href="style.css?v=wnp15" />
 </head>
 
 <body class="wnp">
@@ -28,7 +29,17 @@
       <div class="field">
         <span>Upload proof <span class="req">*</span></span>
         <div class="muted">A photo of a completed checkpoint page (handwritten).</div>
-        <input type="file" accept="image/*" capture="environment" />
+
+        <input
+          id="proofFile"
+          type="file"
+          accept="image/*"
+          capture="environment"
+        />
+
+        <div id="fileHint" class="muted" style="margin-top:10px;">
+          No file selected.
+        </div>
       </div>
 
       <div class="field">
@@ -36,11 +47,16 @@
         <div class="muted">
           This question forces you to confront the lie that kept you stuck.
         </div>
+
         <textarea
           id="q"
           maxlength="500"
           placeholder="What lie have you been telling yourself that this book exposed?"
         ></textarea>
+
+        <div class="muted" style="margin-top:10px;">
+          <span id="count">0</span>/500
+        </div>
       </div>
 
       <div class="checkpoint-confirm">
@@ -50,15 +66,19 @@
         </label>
       </div>
 
+      <div id="result" class="result" style="display:none;"></div>
+
       <div class="actions">
-        <!-- 🔴 RED BUTTON -->
-        <a class="btn btn-danger" href="oath.html">CROSS THE LINE</a>
+        <!-- ✅ Disabled until all requirements are met -->
+        <button id="crossBtn" class="btn btn-danger btn-disabled" type="button" disabled>
+          CROSS THE LINE
+        </button>
+        <a class="btn ghost" href="index.html">BACK</a>
       </div>
 
     </section>
   </main>
 
-  <!-- Page-specific overrides only -->
   <style>
     .checkpoint-confirm{
       display:flex;
@@ -83,13 +103,164 @@
       cursor:pointer;
     }
 
-    /* 🔴 CROSS THE LINE button */
+    /* 🔴 Base danger button */
     .btn-danger{
       background:#FF2A2A !important;
       color:#FFFFFF !important;
       border:none;
     }
+
+    /* ✅ Disabled state */
+    .btn-disabled{
+      opacity:.45;
+      filter: grayscale(35%);
+      cursor:not-allowed !important;
+      pointer-events: none;
+    }
+
+    /* Keep actions tidy */
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+      margin-top:18px;
+    }
+
+    /* Make file input fit theme (some browsers ignore) */
+    input[type="file"]{
+      width:100%;
+      margin-top:10px;
+    }
   </style>
 
+  <script>
+    // ====== endpoints ======
+    const UPLOAD_ENDPOINT = "/api/uploads";
+
+    // ====== elements ======
+    const proofFile = document.getElementById("proofFile");
+    const fileHint = document.getElementById("fileHint");
+    const q = document.getElementById("q");
+    const count = document.getElementById("count");
+    const confirmLine = document.getElementById("confirmLine");
+    const crossBtn = document.getElementById("crossBtn");
+    const result = document.getElementById("result");
+
+    // ====== helpers ======
+    function show(msg, isErr=false){
+      result.style.display = "block";
+      result.className = isErr ? "result err" : "result";
+      result.textContent = msg;
+    }
+    function hideMsg(){
+      result.style.display = "none";
+      result.textContent = "";
+    }
+
+    // Pull email forward if present (register page should set one of these)
+    function getEmailFromAnywhere(){
+      const params = new URLSearchParams(window.location.search);
+      const qp = (params.get("email") || "").trim().toLowerCase();
+      const ss = (sessionStorage.getItem("wnp_email") || "").trim().toLowerCase();
+      const ls = (localStorage.getItem("wnp_email") || "").trim().toLowerCase();
+      return qp || ss || ls || "";
+    }
+
+    function setCrossEnabled(enabled){
+      if (enabled){
+        crossBtn.disabled = false;
+        crossBtn.classList.remove("btn-disabled");
+      } else {
+        crossBtn.disabled = true;
+        crossBtn.classList.add("btn-disabled");
+      }
+    }
+
+    function requirementsMet(){
+      const hasFile = proofFile.files && proofFile.files.length > 0;
+      const answer = (q.value || "").trim();
+      const checked = !!confirmLine.checked;
+      return hasFile && answer.length > 0 && checked;
+    }
+
+    function refreshState(){
+      hideMsg();
+      setCrossEnabled(requirementsMet());
+    }
+
+    // ====== init ======
+    // Char count
+    q.addEventListener("input", () => {
+      count.textContent = String((q.value || "").length);
+      refreshState();
+    });
+
+    proofFile.addEventListener("change", () => {
+      const f = proofFile.files && proofFile.files[0];
+      fileHint.textContent = f ? `Selected: ${f.name} (${Math.round(f.size/1024)} KB)` : "No file selected.";
+      refreshState();
+    });
+
+    confirmLine.addEventListener("change", refreshState);
+
+    // ✅ Prevent old cached flow from sending users elsewhere
+    // This page should only go forward to email setup.
+    window.addEventListener("pageshow", refreshState);
+
+    // ====== submit ======
+    crossBtn.addEventListener("click", async () => {
+      if (!requirementsMet()){
+        show("Complete all required fields to continue.", true);
+        return;
+      }
+
+      const email = getEmailFromAnywhere();
+      const answer = (q.value || "").trim();
+      const f = proofFile.files[0];
+
+      try {
+        show("Uploading checkpoint…");
+
+        // Upload file to R2
+        const fd = new FormData();
+        fd.append("kind", "checkpoint");
+        fd.append("file", f);
+
+        const upRes = await fetch(UPLOAD_ENDPOINT, {
+          method: "POST",
+          body: fd
+          // credentials not required for uploads in your worker; add if you later lock it down
+        });
+
+        const up = await upRes.json().catch(() => ({}));
+        if (!upRes.ok || !up?.success || !up?.key){
+          show(up?.error || "Upload failed. Try again.", true);
+          return;
+        }
+
+        // Store staged data for the next step (email/password setup)
+        // email-setup.html can read these keys
+        sessionStorage.setItem("wnp_checkpoint_key", up.key);
+        sessionStorage.setItem("wnp_checkpoint_answer", answer);
+        sessionStorage.setItem("wnp_checkpoint_confirmed", "true");
+
+        // Keep email available for the next page
+        if (email) sessionStorage.setItem("wnp_email", email);
+
+        show("Checkpoint saved. Continuing…");
+
+        // ✅ Next step: email/password setup (NOT oath)
+        window.location.href = "email-setup.html";
+
+      } catch (err) {
+        show("Network error. Try again.", true);
+      }
+    });
+
+    // initial state
+    refreshState();
+  </script>
 </body>
 </html>
