@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Register Your Copy · WE NOT POOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=wnp16" />
 </head>
 
 <body class="wnp">
@@ -17,7 +17,6 @@
   <main class="wrap">
 
     <header class="hero">
-      <!-- Brand with red accent under WE NOT -->
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -38,10 +37,11 @@
           type="text"
           placeholder="WNP-XXXX-XXXX"
           autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
         />
       </div>
 
-      <!-- ✅ Email required by the API -->
       <div class="field book-code-field" style="margin-top:14px;">
         <span>Email <span class="req">*</span></span>
         <input
@@ -53,7 +53,6 @@
       </div>
 
       <div class="actions actions-stack">
-        <!-- ✅ real button now -->
         <button class="btn" id="continueBtn" type="button">CONTINUE</button>
         <a class="btn ghost" href="member.html">BACK</a>
       </div>
@@ -82,9 +81,7 @@
       margin-right: auto;
     }
 
-    .book-code-field input{
-      width:100%;
-    }
+    .book-code-field input{ width:100%; }
 
     .actions-stack{
       display:flex;
@@ -103,14 +100,27 @@
       .register-card{ max-width: 100%; }
       .book-code-field{ max-width: 100%; }
     }
+
+    .brand-wrap{ display:inline-flex; flex-direction:column; gap:4px; }
+    .brand-offset{ align-items:flex-start; }
+    .brand-accent{
+      display:block;
+      width:36px;
+      height:3px;
+      background: var(--danger, #FF2A2A);
+      border-radius:999px;
+      margin-left:2px;
+    }
   </style>
 
 <script>
-  // ✅ Use same-origin relative URLs to avoid cookie/CORS headaches
-  const API = "";
+  // ✅ Same-origin (Pages -> Worker Functions) endpoint
+  const REDEEM_ENDPOINT = "/api/book-codes/redeem";
+
+  const $ = (id) => document.getElementById(id);
 
   function setMsg(text, isError = true) {
-    const el = document.getElementById("msg");
+    const el = $("msg");
     el.textContent = text || "";
     el.style.color = isError ? "var(--danger, #FF2A2A)" : "var(--textOnDark, #FFD400)";
   }
@@ -123,57 +133,75 @@
     return String(v || "").trim().toLowerCase();
   }
 
-  // ✅ Authoritative router based on Worker progress fields
-  function routeAfterRedeem(data, email) {
-    // If your Worker returns a direct next_step, honor it.
-    // Otherwise infer from the flags (most robust).
-    const needsPassword = !!data.needs_password;
-    const needsOath = !!data.needs_oath;
-    const needsFirstName = !!data.needs_first_name;
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
 
-    // If they are already registered, do NOT send them to checkpoint again.
-    if (data.already_registered) {
-      // If they still need password setup, go there
+  function isValidBookCode(code) {
+    return /^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code);
+  }
+
+  // ✅ Persist staged payload for downstream pages (checkpoint/email-setup)
+  function stageAutoPayload({ email, code, data }) {
+    const payload = {
+      mode: "auto",
+      email,
+      code,
+      member_id: data?.member_id || null,
+      // Helpful for debugging / future routing without re-calling redeem
+      redeem_response: data || null
+    };
+    sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
+    sessionStorage.setItem("wnp_email", email);
+    localStorage.setItem("wnp_email", email);
+  }
+
+  // ✅ Authoritative router based on Worker progress fields
+  function routeAfterRedeem(data, email, code) {
+    const status = String(data?.status || "").toLowerCase();
+    if (status === "denied") return "denied.html";
+    if (status === "pending") return "decision.html";
+
+    const needsPassword = !!data?.needs_password;
+
+    // If already registered, do NOT send them back through checkpoint again.
+    if (data?.already_registered) {
+      // If they still need password setup, go to email setup
       if (needsPassword) return `email-setup.html?email=${encodeURIComponent(email)}`;
 
-      // If they can login, send to login (or directly to member-access if you prefer)
-      // Login is safer because it ensures they have a session cookie.
-      return `login.html?email=${encodeURIComponent(email)}`;
+      // Otherwise send them to login/canonical router
+      // (member-access.html is your login + routes forward via /api/me)
+      return `member-access.html?email=${encodeURIComponent(email)}`;
     }
 
-    // New redemption path (auto-approved member created)
-    // Your locked flow: redeem -> checkpoint (proof) -> email setup -> oath -> name -> member access
-    // However: if Worker indicates they already have password, skip email-setup.
-    if (!needsPassword) {
-      // If password already exists, they can login and proceed from there
-      // (login will route them onward based on /api/me)
-      return `login.html?email=${encodeURIComponent(email)}`;
-    }
+    // New redemption: go to auto checkpoint
+    // (checkpoint collects upload + answer + checkbox before password setup)
+    return `checkpoint.html?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`;
+  }
 
-    // Default new path: go to checkpoint next
-    return `checkpoint.html?email=${encodeURIComponent(email)}`;
+  function setBusy(isBusy) {
+    const btn = $("continueBtn");
+    btn.disabled = isBusy;
+    btn.textContent = isBusy ? "VERIFYING..." : "CONTINUE";
   }
 
   async function redeem() {
     setMsg("");
 
-    const code = normalizeCode(document.getElementById("code").value);
-    const email = normalizeEmail(document.getElementById("email").value);
+    const code = normalizeCode($("code").value);
+    const email = normalizeEmail($("email").value);
 
     if (!code) return setMsg("Book code required.");
-    if (!/^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) return setMsg("Code format must be WNP-XXXX-XXXX.");
+    if (!isValidBookCode(code)) return setMsg("Code format must be WNP-XXXX-XXXX.");
     if (!email) return setMsg("Email required.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setMsg("Enter a valid email.");
+    if (!isValidEmail(email)) return setMsg("Enter a valid email.");
 
-    const btn = document.getElementById("continueBtn");
-    btn.disabled = true;
-    btn.textContent = "VERIFYING...";
+    setBusy(true);
 
     try {
-      const r = await fetch(`${API}/api/book-codes/redeem`, {
+      const r = await fetch(REDEEM_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // ✅ keep cookies if your Worker ever sets any during this step
         credentials: "include",
         body: JSON.stringify({ code, email })
       });
@@ -181,26 +209,45 @@
       const data = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        setMsg(data.error || "Could not verify code.");
-        btn.disabled = false;
-        btn.textContent = "CONTINUE";
+        setMsg(data?.error || "Could not verify code.");
+        setBusy(false);
         return;
       }
 
-      // ✅ Route based on actual state/progress returned by the Worker
-      const next = routeAfterRedeem(data, email);
+      // ✅ Stage payload for the next pages (auto path)
+      stageAutoPayload({ email, code, data });
+
+      // ✅ Route based on actual state/progress returned by Worker
+      const next = routeAfterRedeem(data, email, code);
       window.location.href = next;
 
     } catch (e) {
       setMsg("Network error. Try again.");
-      btn.disabled = false;
-      btn.textContent = "CONTINUE";
+      setBusy(false);
     }
   }
 
-  document.getElementById("continueBtn").addEventListener("click", redeem);
-  document.getElementById("code").addEventListener("keydown", (e) => { if (e.key === "Enter") redeem(); });
-  document.getElementById("email").addEventListener("keydown", (e) => { if (e.key === "Enter") redeem(); });
+  // Prefill from query params (optional but helpful)
+  (function initPrefill() {
+    try {
+      const url = new URL(window.location.href);
+      const qEmail = normalizeEmail(url.searchParams.get("email") || "");
+      const qCode = normalizeCode(url.searchParams.get("code") || "");
+
+      if (qCode) $("code").value = qCode;
+      if (qEmail) $("email").value = qEmail;
+
+      // If no email in URL, use prior stored
+      if (!qEmail) {
+        const carry = (sessionStorage.getItem("wnp_email") || localStorage.getItem("wnp_email") || "").trim();
+        if (carry) $("email").value = normalizeEmail(carry);
+      }
+    } catch (_) {}
+  })();
+
+  $("continueBtn").addEventListener("click", redeem);
+  $("code").addEventListener("keydown", (e) => { if (e.key === "Enter") redeem(); });
+  $("email").addEventListener("keydown", (e) => { if (e.key === "Enter") redeem(); });
 </script>
 
 </body>
