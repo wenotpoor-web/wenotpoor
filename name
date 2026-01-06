@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Name · WE NOT POOR</title>
+
+  <!-- If you already use a shared CSS file, keep this link -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* Fallback styling if styles.css isn’t present on this page yet */
+    :root{
+      --bg:#000;
+      --yellow:#FFD400;
+      --danger:#FF2A2A;
+      --panel:#0b0b0b;
+      --muted:rgba(255,212,0,.72);
+      --radius:16px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    body{
+      margin:0;
+      font-family:var(--font);
+      background:var(--bg);
+      color:var(--yellow);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .card{
+      width:min(560px, 100%);
+      background:var(--panel);
+      border:1px solid rgba(255,212,0,.22);
+      border-radius:var(--radius);
+      padding:22px;
+    }
+    h1{margin:0 0 8px; font-size:22px;}
+    p{margin:0 0 16px; color:var(--muted); line-height:1.35;}
+    label{display:bloc
