@@ -5,39 +5,45 @@
   const form = document.getElementById("loginForm");
   const result = document.getElementById("result");
 
-  function show(msg, isErr=false){
+  function show(msg, isErr = false) {
     result.style.display = "block";
     result.className = isErr ? "result err" : "result";
     result.textContent = msg;
   }
 
   // ✅ Authoritative router based on /api/me (locked flow)
-  function routeFromMe(me){
+  function routeFromMe(me) {
     const status = String(me?.status || "").toLowerCase();
 
     if (status === "denied") return "/denied.html";
     if (status === "pending") return "/decision.html";
-    if (status === "suspended") return "/decision.html"; // or a dedicated suspended page later
+    if (status === "suspended") return "/decision.html"; // optional dedicated page later
 
-    // active path
+    // Active/approved flow gates
     const oathAccepted = !!me?.oath_accepted_at;
-    const firstName = (me?.first_name || "").trim();
+    const firstName = String(me?.first_name || "").trim();
 
     if (!oathAccepted) return "/oath.html";
     if (!firstName) return "/name.html";
-    return "/member-area.html"; // ✅ CHANGE THIS to your real protected content page
-  
-  
-(async () => {
-  try {
-    const meRes = await fetch("/api/me", { credentials: "include" });
-    if (meRes.ok) {
-      const me = await meRes.json();
-      window.location.href = routeFromMe(me);
-    }
-  } catch (_) {}
-})();
+    return "/member-area.html"; // ✅ protected content page
+  }
 
+  // ✅ Auto-skip login if already authenticated (runs once on page load)
+  (async () => {
+    try {
+      const meRes = await fetch(ME_ENDPOINT, { credentials: "include" });
+      if (meRes.ok) {
+        const me = await meRes.json().catch(() => ({}));
+        if (me?.authenticated) {
+          window.location.href = routeFromMe(me);
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+  })();
+
+  // ✅ Login submit
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -57,7 +63,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -68,12 +74,17 @@
         return;
       }
 
-      // 2) Fetch /me (gets status + progress fields)
+      // 2) Fetch /me (canonical state)
       const meRes = await fetch(ME_ENDPOINT, { credentials: "include" });
       const me = await meRes.json().catch(() => ({}));
 
       if (!meRes.ok) {
         show(me?.error || "Login succeeded but session check failed.", true);
+        return;
+      }
+
+      if (!me?.authenticated) {
+        show("Login succeeded, but session was not established.", true);
         return;
       }
 
