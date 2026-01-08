@@ -2,265 +2,312 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Checkpoint · WE NOT POOR</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Use relative path to avoid routing quirks -->
-  <link rel="stylesheet" href="style.css?v=wnp15" />
-</head>
-
-<body class="wnp">
-  <main class="wrap">
-
-    <header class="hero">
-      <div class="brand-wrap brand-offset">
-        <span class="brand">WE NOT POOR</span>
-        <span class="brand-accent" aria-hidden="true"></span>
-      </div>
-
-      <h1>CHECKPOINT</h1>
-      <p class="sub">
-        You are not here because you read.<br />
-        You are here because you acted.
-      </p>
-    </header>
-
-    <section class="card">
-
-      <div class="field">
-        <span>Upload proof <span class="req">*</span></span>
-        <div class="muted">A photo of a completed checkpoint page (handwritten).</div>
-
-        <input
-          id="proofFile"
-          type="file"
-          accept="image/*"
-          capture="environment"
-        />
-
-        <div id="fileHint" class="muted" style="margin-top:10px;">
-          No file selected.
-        </div>
-      </div>
-
-      <div class="field">
-        <span>Why this moment matters <span class="req">*</span></span>
-        <div class="muted">
-          This question forces you to confront the lie that kept you stuck.
-        </div>
-
-        <textarea
-          id="q"
-          maxlength="500"
-          placeholder="What lie have you been telling yourself that this book exposed?"
-        ></textarea>
-
-        <div class="muted" style="margin-top:10px;">
-          <span id="count">0</span>/500
-        </div>
-      </div>
-
-      <div class="checkpoint-confirm">
-        <input id="confirmLine" type="checkbox" class="checkpoint-checkbox" />
-        <label for="confirmLine">
-          I understand this checkpoint is a line I cannot step back over.
-        </label>
-      </div>
-
-      <div id="result" class="result" style="display:none;"></div>
-
-      <div class="actions">
-        <!-- ✅ Disabled until all requirements are met -->
-        <button id="crossBtn" class="btn btn-danger btn-disabled" type="button" disabled>
-          CROSS THE LINE
-        </button>
-        <a class="btn ghost" href="index.html">BACK</a>
-      </div>
-
-    </section>
-  </main>
 
   <style>
-    .checkpoint-confirm{
-      display:flex;
-      align-items:flex-start;
-      gap:10px;
-      margin-top:16px;
+    :root{
+      --bg:#000;
+      --panel:#0b0b0b;
+      --text:#FFD400;
+      --muted:rgba(255,212,0,.75);
+      --line:rgba(255,212,0,.22);
+      --danger:#FF2A2A;
+      --radius:16px;
+      --font:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     }
-
-    .checkpoint-checkbox{
-      width:18px;
-      height:18px;
-      margin-top:3px;
-      flex-shrink:0;
-      appearance:auto !important;
-      -webkit-appearance:checkbox !important;
-      cursor:pointer;
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+    .wrap{max-width:860px;margin:0 auto;padding:22px}
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
     }
-
-    .checkpoint-confirm label{
-      font-weight:600;
-      line-height:1.35;
-      cursor:pointer;
+    h1{margin:0 0 10px;font-size:22px;letter-spacing:.4px}
+    p{margin:8px 0;color:var(--muted);line-height:1.35}
+    label{display:block;margin:14px 0 8px;color:var(--text);font-weight:600}
+    input[type="email"], input[type="text"], textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#000;
+      color:var(--text);
+      outline:none;
     }
-
-    /* 🔴 Base danger button */
-    .btn-danger{
-      background:#FF2A2A !important;
-      color:#FFFFFF !important;
-      border:none;
-    }
-
-    /* ✅ Disabled state */
-    .btn-disabled{
-      opacity:.45;
-      filter: grayscale(35%);
-      cursor:not-allowed !important;
-      pointer-events: none;
-    }
-
-    /* Keep actions tidy */
-    .actions{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:center;
-      margin-top:18px;
-    }
-
-    /* Make file input fit theme (some browsers ignore) */
     input[type="file"]{
       width:100%;
-      margin-top:10px;
+      padding:10px;
+      border-radius:12px;
+      border:1px dashed var(--line);
+      background:#000;
+      color:var(--muted);
     }
+    .row{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width: 720px){
+      .row.two{grid-template-columns:1fr 1fr}
+    }
+
+    .checkline{
+      display:flex;gap:10px;align-items:flex-start;
+      margin-top:14px;padding:12px;border:1px solid var(--line);
+      border-radius:12px;background:#000;
+    }
+    .checkline input{margin-top:2px}
+
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    button{
+      appearance:none;border:0;border-radius:14px;
+      padding:12px 16px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .btn{
+      background:var(--text);
+      color:#000;
+    }
+    .btn:disabled{
+      opacity:.35;
+      cursor:not-allowed;
+    }
+    .btn-ghost{
+      background:transparent;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    .status{
+      margin-top:14px;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#000;
+      color:var(--muted);
+      white-space:pre-wrap;
+      word-break:break-word;
+      min-height:44px;
+    }
+    .status.bad{border-color:rgba(255,42,42,.5); color:#ffd0d0}
+    .status.good{border-color:rgba(22,193,114,.45); color:#c8ffe6}
+    .fine{font-size:12px;color:var(--muted);margin-top:10px}
   </style>
+</head>
 
-  <script>
-    // ====== endpoints ======
-    const UPLOAD_ENDPOINT = "/api/uploads";
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Checkpoint Proof</h1>
+      <p>Upload your checkpoint proof, answer the question, and confirm. When complete, <b>Cross The Line</b> will unlock.</p>
 
-    // ====== elements ======
-    const proofFile = document.getElementById("proofFile");
-    const fileHint = document.getElementById("fileHint");
-    const q = document.getElementById("q");
-    const count = document.getElementById("count");
-    const confirmLine = document.getElementById("confirmLine");
-    const crossBtn = document.getElementById("crossBtn");
-    const result = document.getElementById("result");
+      <div class="row two">
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+          <p class="fine">Use the same email you used to register your copy.</p>
+        </div>
 
-    // ====== helpers ======
-    function show(msg, isErr=false){
-      result.style.display = "block";
-      result.className = isErr ? "result err" : "result";
-      result.textContent = msg;
+        <div>
+          <label for="checkpointId">Checkpoint</label>
+          <select id="checkpointId">
+            <option value="">Select…</option>
+            <option value="checkpoint_1">Checkpoint 1</option>
+          </select>
+          <p class="fine">If you later want this driven dynamically, we can wire it in — but it’s not required.</p>
+        </div>
+      </div>
+
+      <label for="file">Upload Photo (Proof)</label>
+      <input id="file" type="file" accept="image/*" />
+
+      <label for="answer">Answer the Question</label>
+      <input id="answer" type="text" placeholder="Type your answer here…" />
+
+      <div class="checkline">
+        <input id="confirm" type="checkbox" />
+        <div>
+          <div style="font-weight:700;color:var(--text)">I confirm this is my real checkpoint proof.</div>
+          <div class="fine">False submissions will be denied.</div>
+        </div>
+      </div>
+
+      <div class="btnrow">
+        <button id="crossBtn" class="btn" disabled>Cross The Line</button>
+        <button id="resetBtn" class="btn-ghost" type="button">Reset</button>
+      </div>
+
+      <div id="status" class="status">Waiting…</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  const emailEl = $("email");
+  const checkpointEl = $("checkpointId");
+  const fileEl = $("file");
+  const answerEl = $("answer");
+  const confirmEl = $("confirm");
+  const crossBtn = $("crossBtn");
+  const resetBtn = $("resetBtn");
+  const statusEl = $("status");
+
+  let uploadedKeys = []; // image_keys returned from /api/uploads
+  let lastUploadOk = false;
+
+  function setStatus(msg, kind = "") {
+    statusEl.classList.remove("bad","good");
+    if (kind) statusEl.classList.add(kind);
+    statusEl.textContent = msg;
+  }
+
+  function canEnable() {
+    const hasFile = fileEl.files && fileEl.files.length > 0;
+    const hasAnswer = (answerEl.value || "").trim().length > 0;
+    const hasCheck = confirmEl.checked;
+    // require upload success too (so “complete” really means complete)
+    return hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
+  }
+
+  function refreshButton() {
+    crossBtn.disabled = !canEnable();
+  }
+
+  async function uploadCheckpointImage() {
+    uploadedKeys = [];
+    lastUploadOk = false;
+
+    const file = fileEl.files?.[0];
+    if (!file) {
+      setStatus("Select a file to upload.", "bad");
+      refreshButton();
+      return;
     }
-    function hideMsg(){
-      result.style.display = "none";
-      result.textContent = "";
-    }
 
-    // Pull email forward if present (register page should set one of these)
-    function getEmailFromAnywhere(){
-      const params = new URLSearchParams(window.location.search);
-      const qp = (params.get("email") || "").trim().toLowerCase();
-      const ss = (sessionStorage.getItem("wnp_email") || "").trim().toLowerCase();
-      const ls = (localStorage.getItem("wnp_email") || "").trim().toLowerCase();
-      return qp || ss || ls || "";
-    }
+    setStatus("Uploading proof image…");
 
-    function setCrossEnabled(enabled){
-      if (enabled){
-        crossBtn.disabled = false;
-        crossBtn.classList.remove("btn-disabled");
-      } else {
-        crossBtn.disabled = true;
-        crossBtn.classList.add("btn-disabled");
-      }
-    }
+    const fd = new FormData();
+    fd.append("file", file);
 
-    function requirementsMet(){
-      const hasFile = proofFile.files && proofFile.files.length > 0;
-      const answer = (q.value || "").trim();
-      const checked = !!confirmLine.checked;
-      return hasFile && answer.length > 0 && checked;
-    }
-
-    function refreshState(){
-      hideMsg();
-      setCrossEnabled(requirementsMet());
-    }
-
-    // ====== init ======
-    // Char count
-    q.addEventListener("input", () => {
-      count.textContent = String((q.value || "").length);
-      refreshState();
+    // ✅ Upload endpoint requested by you
+    const res = await fetch(`/api/uploads?kind=checkpoint`, {
+      method: "POST",
+      body: fd,
+      credentials: "include",
     });
 
-    proofFile.addEventListener("change", () => {
-      const f = proofFile.files && proofFile.files[0];
-      fileHint.textContent = f ? `Selected: ${f.name} (${Math.round(f.size/1024)} KB)` : "No file selected.";
-      refreshState();
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch {}
+
+    if (!res.ok) {
+      setStatus(`Upload failed (${res.status}).\n${text}`, "bad");
+      refreshButton();
+      return;
+    }
+
+    // Expecting a shape like: { ok:true, key:"...", keys:["..."] } (varies by your Worker)
+    const keys = [];
+    if (data) {
+      if (Array.isArray(data.keys)) keys.push(...data.keys);
+      if (typeof data.key === "string") keys.push(data.key);
+    }
+
+    if (keys.length === 0) {
+      setStatus(`Upload succeeded but returned no key(s).\n${text}`, "bad");
+      refreshButton();
+      return;
+    }
+
+    uploadedKeys = keys;
+    lastUploadOk = true;
+    setStatus(`Upload complete.\nStored key(s): ${uploadedKeys.join(", ")}`, "good");
+    refreshButton();
+  }
+
+  async function submitAutoCheckpoint() {
+    const email = (emailEl.value || "").trim();
+    const checkpoint_id = (checkpointEl.value || "").trim();
+    const answer = (answerEl.value || "").trim();
+
+    if (!email) { setStatus("Email is required.", "bad"); return; }
+    if (!checkpoint_id) { setStatus("Checkpoint selection is required.", "bad"); return; }
+    if (!answer) { setStatus("Answer is required.", "bad"); return; }
+    if (!confirmEl.checked) { setStatus("You must confirm.", "bad"); return; }
+    if (!uploadedKeys.length) { setStatus("Upload your proof image first.", "bad"); return; }
+
+    setStatus("Submitting checkpoint…");
+
+    // ✅ Submit endpoint requested by you
+    const res = await fetch(`/api/auto-checkpoint/submit`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      credentials: "include",
+      body: JSON.stringify({
+        email,
+        checkpoint_id,
+        image_keys: uploadedKeys,
+        answer
+      }),
     });
 
-    confirmLine.addEventListener("change", refreshState);
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch {}
 
-    // ✅ Prevent old cached flow from sending users elsewhere
-    // This page should only go forward to email setup.
-    window.addEventListener("pageshow", refreshState);
+    if (!res.ok) {
+      setStatus(`Submit failed (${res.status}).\n${text}`, "bad");
+      return;
+    }
 
-    // ====== submit ======
-    crossBtn.addEventListener("click", async () => {
-      if (!requirementsMet()){
-        show("Complete all required fields to continue.", true);
-        return;
-      }
+    setStatus("Checkpoint accepted. Routing to Email Setup…", "good");
 
-      const email = getEmailFromAnywhere();
-      const answer = (q.value || "").trim();
-      const f = proofFile.files[0];
+    // ✅ Route requested by you
+    setTimeout(() => {
+      window.location.href = `email-setup.html`;
+    }, 450);
+  }
 
-      try {
-        show("Uploading checkpoint…");
+  // --- Events ---
+  fileEl.addEventListener("change", async () => {
+    // New file => require re-upload
+    uploadedKeys = [];
+    lastUploadOk = false;
+    refreshButton();
+    if (fileEl.files?.length) {
+      try { await uploadCheckpointImage(); }
+      catch (e) { setStatus(`Upload error:\n${String(e)}`, "bad"); }
+    }
+  });
 
-        // Upload file to R2
-        const fd = new FormData();
-        fd.append("kind", "checkpoint");
-        fd.append("file", f);
+  ["input","change","keyup"].forEach(evt => {
+    answerEl.addEventListener(evt, refreshButton);
+    emailEl.addEventListener(evt, refreshButton);
+    checkpointEl.addEventListener(evt, refreshButton);
+    confirmEl.addEventListener(evt, refreshButton);
+  });
 
-        const upRes = await fetch(UPLOAD_ENDPOINT, {
-          method: "POST",
-          body: fd
-          // credentials not required for uploads in your worker; add if you later lock it down
-        });
+  crossBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    try { await submitAutoCheckpoint(); }
+    catch (err) { setStatus(`Unexpected error:\n${String(err)}`, "bad"); }
+  });
 
-        const up = await upRes.json().catch(() => ({}));
-        if (!upRes.ok || !up?.success || !up?.key){
-          show(up?.error || "Upload failed. Try again.", true);
-          return;
-        }
+  resetBtn.addEventListener("click", () => {
+    emailEl.value = "";
+    checkpointEl.value = "";
+    fileEl.value = "";
+    answerEl.value = "";
+    confirmEl.checked = false;
+    uploadedKeys = [];
+    lastUploadOk = false;
+    setStatus("Reset. Waiting…");
+    refreshButton();
+  });
 
-        // Store staged data for the next step (email/password setup)
-        // email-setup.html can read these keys
-        sessionStorage.setItem("wnp_checkpoint_key", up.key);
-        sessionStorage.setItem("wnp_checkpoint_answer", answer);
-        sessionStorage.setItem("wnp_checkpoint_confirmed", "true");
-
-        // Keep email available for the next page
-        if (email) sessionStorage.setItem("wnp_email", email);
-
-        show("Checkpoint saved. Continuing…");
-
-        // ✅ Next step: email/password setup (NOT oath)
-        window.location.href = "email-setup.html";
-
-      } catch (err) {
-        show("Network error. Try again.", true);
-      }
-    });
-
-    // initial state
-    refreshState();
-  </script>
+  refreshButton();
+})();
+</script>
 </body>
 </html>
