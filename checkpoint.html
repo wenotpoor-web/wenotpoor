@@ -6,7 +6,6 @@
   <title>Show Your Work · WE NOT POOR</title>
   <link rel="stylesheet" href="style.css?v=wnp16" />
 
-  <!-- ✅ Focused overrides: spacing, separation, and a correct checkbox -->
   <style>
     /* Center hero like your other pages */
     .hero.hero-center{ text-align:center; }
@@ -18,11 +17,10 @@
       margin-right:auto;
     }
 
-    /* Section spacing (prevents "everything runs together") */
+    /* Section spacing */
     .field-block{ margin-top: 18px; }
     .fine{ margin-top: 10px; line-height: 1.4; }
 
-    /* Add a visual divider between Upload instructions and Question */
     .divider{
       height:1px;
       background: rgba(255,212,0,.22);
@@ -30,13 +28,10 @@
       border-radius: 999px;
     }
 
-    /* Label spacing consistency */
     label{ margin-top: 18px; }
-
-    /* Question block breathing room */
     .questionBox{ margin-top: 10px; margin-bottom: 8px; }
 
-    /* ✅ Correct checkbox row (no giant ring / no weird alignment) */
+    /* Checkbox row */
     .checkline{
       display:flex;
       gap:12px;
@@ -48,21 +43,41 @@
       border: 1px solid rgba(255,212,0,.22);
     }
     .checkline input[type="checkbox"]{
-      appearance:auto;            /* ✅ let browser render a real checkbox */
+      appearance:auto;
       width:18px;
       height:18px;
       margin: 2px 0 0 0;
       flex: 0 0 auto;
-      accent-color: #FFD400;      /* ✅ yellow tick */
+      accent-color: #FFD400;
     }
     .checkTitle{ font-weight:900; }
 
-    /* Buttons row spacing */
+    /* ✅ Center buttons */
     .btnrow{
       display:flex;
+      justify-content:center;   /* ✅ centered */
+      align-items:center;
       gap:12px;
       flex-wrap:wrap;
-      margin-top:18px;
+      margin-top:22px;
+    }
+
+    /* ✅ Disabled state stays non-selectable */
+    #crossBtn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      pointer-events:none;      /* ✅ cannot be clicked */
+      filter: grayscale(15%);
+    }
+
+    /* ✅ Enabled state: RED + WHITE letters */
+    #crossBtn.ready{
+      background:#FF2A2A !important;
+      color:#FFFFFF !important;
+      border:1px solid rgba(255,42,42,.8);
+    }
+    #crossBtn.ready:hover{
+      filter: brightness(1.05);
     }
   </style>
 </head>
@@ -121,7 +136,7 @@
       </div>
 
       <div class="btnrow">
-        <button id="crossBtn" class="btn" disabled>Cross The Line</button>
+        <button id="crossBtn" class="btn" disabled aria-disabled="true">Cross The Line</button>
         <button id="resetBtn" class="btn ghost" type="button">Reset</button>
       </div>
     </section>
@@ -164,24 +179,35 @@
     }
   }
 
-  function canEnable() {
+  function allComplete() {
     const email = (emailEl.value || "").trim();
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
+
+    // ✅ this is the real "all submissions completed" gate:
+    // - email present
+    // - file selected
+    // - upload to /api/uploads succeeded (lastUploadOk + uploadedKeys)
+    // - answer entered
+    // - confirm checkbox checked
     return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
-  function refreshButton() {
-    crossBtn.disabled = !canEnable();
+  function setCrossState() {
+    const ok = allComplete();
+    crossBtn.disabled = !ok;
+    crossBtn.setAttribute("aria-disabled", String(!ok));
+    crossBtn.classList.toggle("ready", ok); // ✅ turns red/white when selectable
   }
 
   async function uploadCheckpointImage() {
     uploadedKeys = [];
     lastUploadOk = false;
+    setCrossState();
 
     const file = fileEl.files?.[0];
-    if (!file) { refreshButton(); return; }
+    if (!file) return;
 
     const fd = new FormData();
     fd.append("file", file);
@@ -199,7 +225,7 @@
     if (!res.ok) {
       uploadedKeys = [];
       lastUploadOk = false;
-      refreshButton();
+      setCrossState();
       return;
     }
 
@@ -212,20 +238,21 @@
     if (!keys.length) {
       uploadedKeys = [];
       lastUploadOk = false;
-      refreshButton();
+      setCrossState();
       return;
     }
 
     uploadedKeys = keys;
     lastUploadOk = true;
-    refreshButton();
+    setCrossState();
   }
 
   async function submitAutoCheckpoint() {
+    // hard gate (even if someone removes disabled in devtools)
+    if (!allComplete()) return;
+
     const email = (emailEl.value || "").trim();
     const answer = (answerEl.value || "").trim();
-
-    if (!email || !answer || !confirmEl.checked || !uploadedKeys.length) return;
 
     const res = await fetch(`/api/auto-checkpoint/submit`, {
       method: "POST",
@@ -245,20 +272,21 @@
     window.location.href = `email-setup.html?email=${encodeURIComponent(email)}`;
   }
 
+  // Events
   fileEl.addEventListener("change", async () => {
     uploadedKeys = [];
     lastUploadOk = false;
-    refreshButton();
+    setCrossState();
 
     if (fileEl.files?.length) {
-      try { await uploadCheckpointImage(); } catch {}
+      try { await uploadCheckpointImage(); } catch { setCrossState(); }
     }
   });
 
   ["input","change","keyup"].forEach(evt => {
-    answerEl.addEventListener(evt, refreshButton);
-    confirmEl.addEventListener(evt, refreshButton);
-    emailEl.addEventListener(evt, refreshButton);
+    answerEl.addEventListener(evt, setCrossState);
+    confirmEl.addEventListener(evt, setCrossState);
+    emailEl.addEventListener(evt, setCrossState);
   });
 
   crossBtn.addEventListener("click", async (e) => {
@@ -267,16 +295,18 @@
   });
 
   resetBtn.addEventListener("click", () => {
+    // Keep email (carried from register)
     fileEl.value = "";
     answerEl.value = "";
     confirmEl.checked = false;
     uploadedKeys = [];
     lastUploadOk = false;
-    refreshButton();
+    setCrossState();
   });
 
+  // init
   setEmailFromRegister();
-  refreshButton();
+  setCrossState();
 })();
 </script>
 </body>
