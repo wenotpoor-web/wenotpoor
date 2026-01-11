@@ -13,6 +13,7 @@
       --text:#FFD400;
       --muted:rgba(255,212,0,.75);
       --line:rgba(255,212,0,.22);
+      --outline:rgba(255,212,0,.55); /* thicker outline color */
       --danger:#FF2A2A;
       --good:#16c172;
       --radius:18px;
@@ -33,10 +34,12 @@
     }
     .card{
       background:linear-gradient(180deg, rgba(255,212,0,.06), rgba(0,0,0,0) 32%), var(--panel);
-      border:1px solid var(--line);
+      border:2px solid var(--outline);            /* ✅ thicker */
       border-radius:var(--radius);
       padding:20px;
-      box-shadow:0 0 0 1px rgba(0,0,0,.65) inset;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.65) inset,
+        0 0 0 1px rgba(255,212,0,.12);            /* subtle extra edge */
     }
     h1{
       margin:0 0 10px;
@@ -61,7 +64,6 @@
       margin-top:8px;
     }
 
-    /* Inputs */
     input[type="email"], input[type="text"], textarea{
       width:100%;
       padding:13px 14px;
@@ -95,7 +97,6 @@
       line-height:1.35;
     }
 
-    /* Checkbox line */
     .checkline{
       display:flex;
       gap:12px;
@@ -116,7 +117,6 @@
       color:var(--text);
     }
 
-    /* Buttons */
     .btnrow{
       display:flex;
       gap:12px;
@@ -144,24 +144,6 @@
       color:var(--text);
       border:1px solid var(--line);
     }
-
-    /* Status */
-    .status{
-      margin-top:16px;
-      padding:12px 14px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:#000;
-      color:var(--muted);
-      white-space:pre-wrap;
-      word-break:break-word;
-      min-height:46px;
-    }
-    .status.bad{ border-color:rgba(255,42,42,.55); color:#ffd0d0 }
-    .status.good{ border-color:rgba(22,193,114,.45); color:#c8ffe6 }
-
-    /* Small spacing helper */
-    .spacer{height:6px}
   </style>
 </head>
 
@@ -179,7 +161,6 @@
       <input id="file" type="file" accept="image/*" />
 
       <label>Question</label>
-      <!-- ✅ PUT YOUR QUESTION TEXT RIGHT HERE -->
       <div id="questionText" class="questionBox">
         What is the one belief you are refusing to let die — even though it’s costing you your future?
       </div>
@@ -200,7 +181,7 @@
         <button id="resetBtn" class="btn-ghost" type="button">Reset</button>
       </div>
 
-      <div id="status" class="status">Waiting…</div>
+      <!-- ✅ Status removed (per your request) -->
     </div>
   </div>
 
@@ -214,23 +195,32 @@
   const confirmEl = $("confirm");
   const crossBtn = $("crossBtn");
   const resetBtn = $("resetBtn");
-  const statusEl = $("status");
   const questionTextEl = $("questionText");
 
-  // Worker still expects checkpoint_id — we set it silently (no dropdown).
+  // Worker expects checkpoint_id — keep silently.
   const CHECKPOINT_ID = "checkpoint_1";
-
-  // Optional: include question text in payload for your own auditing later.
-  // Worker may ignore it; it won't break anything.
   const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
 
   let uploadedKeys = [];
   let lastUploadOk = false;
 
-  function setStatus(msg, kind = "") {
-    statusEl.classList.remove("bad","good");
-    if (kind) statusEl.classList.add(kind);
-    statusEl.textContent = msg;
+  // ✅ Pull email forward so user doesn’t retype
+  // Accept either ?email=... or ?e=...
+  function getEmailFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get("email") || params.get("e") || "").trim();
+  }
+
+  function loadRememberedEmail() {
+    const fromUrl = getEmailFromUrl();
+    const fromStorage = (localStorage.getItem("wnp_email") || "").trim();
+    const value = fromUrl || fromStorage;
+    if (value) emailEl.value = value;
+  }
+
+  function rememberEmail(value) {
+    const v = (value || "").trim();
+    if (v) localStorage.setItem("wnp_email", v);
   }
 
   function canEnable() {
@@ -250,12 +240,9 @@
 
     const file = fileEl.files?.[0];
     if (!file) {
-      setStatus("Select a file to upload.", "bad");
       refreshButton();
       return;
     }
-
-    setStatus("Uploading proof image…");
 
     const fd = new FormData();
     fd.append("file", file);
@@ -271,7 +258,9 @@
     try { data = JSON.parse(text); } catch {}
 
     if (!res.ok) {
-      setStatus(`Upload failed (${res.status}).\n${text}`, "bad");
+      // no status UI; fail quietly but keep button disabled
+      uploadedKeys = [];
+      lastUploadOk = false;
       refreshButton();
       return;
     }
@@ -283,14 +272,14 @@
     }
 
     if (keys.length === 0) {
-      setStatus(`Upload succeeded but returned no key(s).\n${text}`, "bad");
+      uploadedKeys = [];
+      lastUploadOk = false;
       refreshButton();
       return;
     }
 
     uploadedKeys = keys;
     lastUploadOk = true;
-    setStatus(`Upload complete.\nStored key(s): ${uploadedKeys.join(", ")}`, "good");
     refreshButton();
   }
 
@@ -298,12 +287,13 @@
     const email = (emailEl.value || "").trim();
     const answer = (answerEl.value || "").trim();
 
-    if (!email) { setStatus("Email is required.", "bad"); return; }
-    if (!answer) { setStatus("Answer is required.", "bad"); return; }
-    if (!confirmEl.checked) { setStatus("You must confirm.", "bad"); return; }
-    if (!uploadedKeys.length) { setStatus("Upload your proof image first.", "bad"); return; }
+    if (!email) return;
+    if (!answer) return;
+    if (!confirmEl.checked) return;
+    if (!uploadedKeys.length) return;
 
-    setStatus("Submitting checkpoint…");
+    // Remember email for next pages
+    rememberEmail(email);
 
     const res = await fetch(`/api/auto-checkpoint/submit`, {
       method: "POST",
@@ -318,17 +308,11 @@
       }),
     });
 
-    const text = await res.text();
+    if (!res.ok) return;
 
-    if (!res.ok) {
-      setStatus(`Submit failed (${res.status}).\n${text}`, "bad");
-      return;
-    }
-
-    setStatus("Checkpoint accepted. Routing to Email Setup…", "good");
-    setTimeout(() => {
-      window.location.href = `email-setup.html`;
-    }, 450);
+    // ✅ Route to email-setup with email prefilled
+    const next = `email-setup.html?email=${encodeURIComponent(email)}`;
+    window.location.href = next;
   }
 
   // Events
@@ -338,34 +322,33 @@
     refreshButton();
 
     if (fileEl.files?.length) {
-      try { await uploadCheckpointImage(); }
-      catch (e) { setStatus(`Upload error:\n${String(e)}`, "bad"); }
+      try { await uploadCheckpointImage(); } catch {}
     }
   });
 
   ["input","change","keyup"].forEach(evt => {
     answerEl.addEventListener(evt, refreshButton);
-    emailEl.addEventListener(evt, refreshButton);
+    emailEl.addEventListener(evt, () => { rememberEmail(emailEl.value); refreshButton(); });
     confirmEl.addEventListener(evt, refreshButton);
   });
 
   crossBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    try { await submitAutoCheckpoint(); }
-    catch (err) { setStatus(`Unexpected error:\n${String(err)}`, "bad"); }
+    try { await submitAutoCheckpoint(); } catch {}
   });
 
   resetBtn.addEventListener("click", () => {
-    emailEl.value = "";
+    // keep email (since you want it carried forward)
     fileEl.value = "";
     answerEl.value = "";
     confirmEl.checked = false;
     uploadedKeys = [];
     lastUploadOk = false;
-    setStatus("Reset. Waiting…");
     refreshButton();
   });
 
+  // init
+  loadRememberedEmail();
   refreshButton();
 })();
 </script>
