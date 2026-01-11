@@ -286,24 +286,6 @@
       refresh();
     });
 
-    // small "Clear email" link (one-time)
-    if (emailBlock && !document.getElementById("clearEmailLink")) {
-      const a = document.createElement("a");
-      a.id = "clearEmailLink";
-      a.href = "#";
-      a.className = "miniLink";
-      a.textContent = "Clear email";
-
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        localStorage.removeItem("wnp_email");
-        emailEl.value = "";
-        emailEl.focus();
-        refresh();
-      });
-
-      emailBlock.appendChild(a);
-    }
   }
 
   function showThumbForFile(file){
