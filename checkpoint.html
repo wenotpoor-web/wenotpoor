@@ -6,30 +6,22 @@
   <title>Show Your Work · WE NOT POOR</title>
   <link rel="stylesheet" href="style.css?v=wnp16" />
 
-  <!-- ✅ CLEAN, SAFE OVERRIDES ONLY -->
   <style>
     /* ---------- HERO CENTERING ---------- */
     .hero.hero-center{ text-align:center; }
     .hero.hero-center .brand-wrap{ align-items:flex-start; }
-    /* Force accent UNDER "WE NOT" (left aligned under brand) */
-    .hero.hero-center .brand-accent{
-      margin:0;
-      margin-left:2px;
-    }
-    .hero.hero-center .sub{
-      max-width:760px;
-      margin:0 auto;
-    }
+    .hero.hero-center .brand-accent{ margin:0; margin-left:2px; }
+    .hero.hero-center .sub{ max-width:760px; margin:0 auto; }
 
-    /* ---------- LABEL → INPUT CUSHION ---------- */
+    /* ---------- FIELD SPACING ---------- */
+    .field-block{ margin-top:14px; }
+    .field-block:first-child{ margin-top:0; }
     section.card label{
       display:block;
-      margin:0 0 6px !important;   /* ✅ remove extra space above + thin cushion below */
+      margin:0 0 6px !important;
       line-height:1.15;
       font-weight:800;
     }
-    section.card .field-block{ margin-top:14px; } /* slightly tighter */
-    section.card .field-block:first-child{ margin-top:0; } /* ✅ fixes big space above Email */
     .fine{ margin-top:8px; line-height:1.4; }
 
     /* ---------- DIVIDER ---------- */
@@ -47,7 +39,7 @@
       gap:10px;
       font-weight:900;
       letter-spacing:.10em;
-      margin:0 0 10px;            /* a little more stand-out */
+      margin:0 0 10px;
       text-transform:uppercase;
     }
     .question-dot{
@@ -56,18 +48,12 @@
       box-shadow:0 0 0 3px rgba(255,212,0,.18);
       flex:0 0 auto;
     }
-
-    /* Make the question sentence look like instruction text (NOT bold) with ONLY <b> bold */
     .questionBox{
-      margin-top:0;
-      margin-bottom:12px;
-      font-weight:600 !important;          /* ✅ not bold */
+      margin:0 0 12px;
+      font-weight:600 !important;
       text-transform:none !important;
       letter-spacing:0 !important;
       line-height:1.45;
-    }
-    .questionBox b{
-      font-weight:900 !important;          /* ✅ if you ever bold a phrase inside */
     }
 
     /* ---------- CHECKBOX ---------- */
@@ -93,7 +79,7 @@
     /* ---------- BUTTON ROW ---------- */
     .btnrow{
       display:flex;
-      justify-content:center;  /* ✅ centered */
+      justify-content:center;
       align-items:center;
       gap:14px;
       margin-top:22px;
@@ -105,7 +91,6 @@
       pointer-events:none;
       filter: grayscale(15%);
     }
-    /* Enabled state: red w/ white letters */
     #crossBtn:not(:disabled){
       background:#FF2A2A;
       color:#fff;
@@ -116,7 +101,7 @@
       display:flex;
       gap:12px;
       align-items:flex-start;
-      margin-top: 10px;
+      margin-top:10px;
     }
     .thumb{
       width:74px;height:74px;
@@ -124,7 +109,7 @@
       border:1px solid rgba(255,212,0,.22);
       background: rgba(0,0,0,.35);
       overflow:hidden;
-      display:none; /* hidden until file chosen */
+      display:none;
       flex:0 0 auto;
     }
     .thumb img{
@@ -133,22 +118,21 @@
       object-fit:cover;
       display:block;
     }
-    .thumbMeta{ flex:1 1 auto; min-width:0; }
 
-    /* Hide any "Uploaded" status indicator if it exists */
-    #uploadedBadge, .badge, .badge.ok{ display:none !important; }
-
-    /* IMPORTANT: sentence-style instruction blocks (not labels) */
+    /* Sentence instruction (not a label) */
     .upload-instruction{
       margin:0 0 10px;
+      color:var(--muted);
+      font-weight:600;
+      line-height:1.4;
     }
+    .upload-instruction b{ font-weight:900; color:var(--textOnDark); }
   </style>
 </head>
 
 <body class="wnp">
   <main class="wrap">
 
-    <!-- HERO -->
     <header class="hero hero-center">
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
@@ -170,7 +154,7 @@
         <input id="email" type="email" autocomplete="email" />
       </div>
 
-      <!-- UPLOAD (✅ instruction NOT a label; only <b> is bold via CSS you’ll paste) -->
+      <!-- UPLOAD -->
       <div class="field-block">
         <div class="upload-instruction">
           Please upload a clear photo of <b>your physical book</b> showing the checkpoint page
@@ -184,20 +168,18 @@
           <div id="thumb" class="thumb">
             <img id="thumbImg" alt="Upload preview" />
           </div>
-          <div class="thumbMeta"></div>
         </div>
       </div>
 
       <div class="divider" aria-hidden="true"></div>
 
-      <!-- QUESTION (✅ scroll target) -->
+      <!-- QUESTION -->
       <div class="field-block" id="questionSection">
         <div class="question-label">
           <span class="question-dot"></span>
           <span>QUESTION</span>
         </div>
 
-        <!-- ✅ Also apply “sentence not bold; only <b> bold” behavior here -->
         <div id="questionText" class="questionBox">
           What is the one belief you are refusing to let die — even though it’s costing you your future?
         </div>
@@ -238,15 +220,16 @@
   const crossBtn = $("crossBtn");
   const resetBtn = $("resetBtn");
   const questionTextEl = $("questionText");
-
   const thumb = $("thumb");
   const thumbImg = $("thumbImg");
 
   const CHECKPOINT_ID = "checkpoint_1";
   const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
 
-  let uploadedKeys = [];
-  let lastUploadOk = false;
+  // We keep BOTH forms because your Worker has previously demanded checkpoint_key specifically.
+  let imageKeys = [];        // for Workers that accept image_keys
+  let checkpointKey = "";    // for Workers that accept checkpoint_key
+  let uploadOk = false;
 
   function normalizeEmail(v){ return (v || "").trim().toLowerCase(); }
 
@@ -257,9 +240,10 @@
 
   function setEmail(){
     const e = normalizeEmail(getEmailFromUrl()) || normalizeEmail(localStorage.getItem("wnp_email") || "");
-    if(e){
+    if (e) {
       emailEl.value = e;
-      emailEl.disabled = true;              // follows your “carry email forward” behavior
+      // IMPORTANT: only lock if we actually have a carry-over email
+      emailEl.disabled = true;
       localStorage.setItem("wnp_email", e);
     } else {
       emailEl.disabled = false;
@@ -284,23 +268,49 @@
       && (fileEl.files && fileEl.files.length > 0)
       && !!answerEl.value.trim()
       && !!confirmEl.checked
-      && lastUploadOk
-      && uploadedKeys.length > 0;
+      && uploadOk
+      && (checkpointKey || imageKeys.length > 0);
   }
 
   function refresh(){
     crossBtn.disabled = !canEnable();
   }
 
+  function resetUploadState(){
+    imageKeys = [];
+    checkpointKey = "";
+    uploadOk = false;
+  }
+
+  function extractKeysFromUploadResponse(d){
+    // Accept multiple shapes:
+    // { key }, { keys }, { checkpoint_key }, { checkpoint_keys }
+    const img = [];
+    let ck = "";
+
+    if (!d || typeof d !== "object") return { img, ck };
+
+    if (Array.isArray(d.keys)) img.push(...d.keys.filter(Boolean));
+    if (typeof d.key === "string" && d.key) img.push(d.key);
+
+    if (Array.isArray(d.checkpoint_keys)) ck = d.checkpoint_keys.filter(Boolean)[0] || "";
+    if (typeof d.checkpoint_key === "string" && d.checkpoint_key) ck = d.checkpoint_key;
+
+    // Fallback: if Worker returns only one key, treat it as both
+    if (!ck && img.length === 1) ck = img[0];
+
+    return { img, ck };
+  }
+
   async function upload(){
-    uploadedKeys = [];
-    lastUploadOk = false;
+    resetUploadState();
     refresh();
 
     const f = fileEl.files?.[0];
     if(!f) return;
 
     const fd = new FormData();
+    // Worker expects "file" (you previously got Missing kind or file)
     fd.append("file", f);
 
     const r = await fetch("/api/uploads?kind=checkpoint",{
@@ -309,17 +319,24 @@
       credentials:"include"
     });
 
-    const d = await r.json().catch(()=>null);
-    if(!r.ok || !d) return refresh();
+    const text = await r.text();
+    let d = null;
+    try { d = JSON.parse(text); } catch {}
 
-    if(Array.isArray(d.keys)) uploadedKeys = d.keys;
-    else if(d.key) uploadedKeys = [d.key];
+    if(!r.ok){
+      // leave disabled; no status indicator shown
+      return refresh();
+    }
 
-    lastUploadOk = uploadedKeys.length > 0;
+    const { img, ck } = extractKeysFromUploadResponse(d);
+    imageKeys = img;
+    checkpointKey = ck;
+
+    uploadOk = !!(checkpointKey || imageKeys.length > 0);
     refresh();
 
-    /* ✅ Auto-scroll to QUESTION after successful upload */
-    if (lastUploadOk) {
+    // Auto-scroll to QUESTION after successful upload
+    if (uploadOk) {
       setTimeout(() => {
         const q = document.getElementById("questionSection");
         if (q) q.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -332,25 +349,33 @@
 
     const email = normalizeEmail(emailEl.value);
 
+    const payload = {
+      email,
+      checkpoint_id: CHECKPOINT_ID,
+      answer: answerEl.value.trim(),
+      question: QUESTION_TEXT,
+      confirmed: !!confirmEl.checked
+    };
+
+    // Send both so whichever your Worker requires is satisfied
+    if (imageKeys.length) payload.image_keys = imageKeys;
+    if (checkpointKey) payload.checkpoint_key = checkpointKey;
+
     const r = await fetch("/api/auto-checkpoint/submit",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       credentials:"include",
-      body:JSON.stringify({
-        email,
-        checkpoint_id: CHECKPOINT_ID,
-        image_keys: uploadedKeys,
-        answer: answerEl.value.trim(),
-        question: QUESTION_TEXT,
-        confirmed: !!confirmEl.checked
-      })
+      body: JSON.stringify(payload)
     });
 
-    if(!r.ok) return;
+    if(!r.ok){
+      return; // no status box; stays on page
+    }
 
     location.href = "email-setup.html?email=" + encodeURIComponent(email);
   }
 
+  // Events
   fileEl.addEventListener("change", async () => {
     showThumbForFile(fileEl.files?.[0] || null);
     await upload();
@@ -359,6 +384,7 @@
   ["input","change","keyup"].forEach(evt => {
     answerEl.addEventListener(evt, refresh);
     confirmEl.addEventListener(evt, refresh);
+    emailEl.addEventListener(evt, refresh);
   });
 
   crossBtn.addEventListener("click", (e) => {
@@ -367,15 +393,14 @@
   });
 
   resetBtn.addEventListener("click", () => {
+    // keep email if carried
     fileEl.value = "";
     showThumbForFile(null);
 
     answerEl.value = "";
     confirmEl.checked = false;
 
-    uploadedKeys = [];
-    lastUploadOk = false;
-
+    resetUploadState();
     refresh();
   });
 
