@@ -94,7 +94,8 @@
         <a class="btn ghost" href="index.html">BACK</a>
       </div>
 
-      <pre class="result" id="result">Waiting…</pre>
+      <!-- ✅ Step 2 feedback only appears when needed (no bottom-left status) -->
+      <div class="result" id="step2Msg" style="display:none; margin-top:12px;"></div>
     </section>
 
     <footer class="foot foot-center">
@@ -110,6 +111,12 @@
       background: var(--danger, #FF2A2A);
       border-radius:999px; margin-left:2px;
     }
+
+    .btn-disabled{
+      opacity:.45;
+      filter: grayscale(35%);
+      cursor:not-allowed !important;
+    }
   </style>
 
   <script>
@@ -119,15 +126,18 @@
 
     const $ = (id) => document.getElementById(id);
 
-    const result = $("result");
     const step1Err = $("step1Err");
     const step1Ok = $("step1Ok");
     const sendLimitHint = $("sendLimitHint");
+    const step2Msg = $("step2Msg");
 
-    function setResult(msg, isErr=false) {
-      result.textContent = msg;
-      result.classList.toggle("err", !!isErr);
+    function setStep2(msg, isErr=false) {
+      if (!msg) { step2Msg.style.display="none"; step2Msg.textContent=""; step2Msg.classList.remove("err"); return; }
+      step2Msg.style.display="block";
+      step2Msg.textContent = msg;
+      step2Msg.classList.toggle("err", !!isErr);
     }
+
     function setStep1Err(msg="") {
       if (!msg) { step1Err.style.display="none"; step1Err.textContent=""; return; }
       step1Err.style.display="block";
@@ -215,7 +225,7 @@
       setStep1Err("");
       setStep1Ok("");
       lockEmailFields(false);
-      setResult("Edit your email, then send a new temporary password.");
+      setStep2("Edit your email, then send a new temporary password.");
     };
 
     function persistCanonicalEmail(email) {
@@ -240,39 +250,38 @@
       if (carryEmail) {
         $("email").value = carryEmail;
         $("email2").value = carryEmail;
-
-        // If email arrived from URL, treat it as the carried identity, but still allow edit.
-        // We'll lock after first send.
         persistCanonicalEmail(carryEmail);
       }
 
       updateSendLimitUI();
-      setResult("Waiting…");
+      setStep2(""); // hidden by default
     })();
 
     // STEP 1 — Send temporary password
     $("sendTemp").onclick = async () => {
       setStep1Err("");
       setStep1Ok("");
+      setStep2("");
 
       const email = $("email").value.trim().toLowerCase();
       const email2 = $("email2").value.trim().toLowerCase();
 
-      if (!email || !email2) { setStep1Err("Enter email twice."); return setResult("Enter email twice.", true); }
-      if (email !== email2) { setStep1Err("Emails do not match."); return setResult("Emails do not match.", true); }
+      if (!email || !email2) { setStep1Err("Enter email twice."); return; }
+      if (email !== email2) { setStep1Err("Emails do not match."); return; }
 
       const sends = getSendCount();
       if (sends >= 3) {
         setStep1Err("Send limit reached (3). Try again later or use a different browser session.");
-        return setResult("Send limit reached.", true);
+        return;
       }
-
-      setResult("Sending temporary password…");
 
       // persist canonical email everywhere (final decision begins here)
       persistCanonicalEmail(email);
 
       try {
+        $("sendTemp").disabled = true;
+        setStep1Ok("Sending temporary password…");
+
         const r = await fetch(TEMP_REQUEST, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -282,8 +291,9 @@
 
         const data = await r.json().catch(() => ({}));
         if (!r.ok) {
+          setStep1Ok("");
           setStep1Err(data.error || "Failed to send temp password.");
-          return setResult(data.error || "Failed to send temp password.", true);
+          return;
         }
 
         const n = incSendCount();
@@ -292,16 +302,22 @@
         // after first send, lock email fields unless they click "Edit email"
         lockEmailFields(true);
 
+        setStep1Err("");
         setStep1Ok("Temporary password sent. Check your inbox (and spam).");
-        setResult(`Temporary password sent. (${Math.max(0, 3 - n)}/3 remaining)`);
+        setStep2(`Temporary password requested successfully. (${Math.max(0, 3 - n)}/3 remaining)`);
       } catch (e) {
+        setStep1Ok("");
         setStep1Err("Network error sending email. Try again.");
-        setResult("Network error. Try again.", true);
+      } finally {
+        // re-enable if still allowed
+        if (getSendCount() < 3) $("sendTemp").disabled = false;
       }
     };
 
     // STEP 2 — Confirm temp + set new password
     $("confirmPw").onclick = async () => {
+      setStep2("");
+
       const email = $("email").value.trim().toLowerCase();
       const temp = $("temp").value.trim();
       const pw = $("pw").value;
@@ -312,17 +328,17 @@
 
       const mode = String(payload.mode || modeValue() || "manual").toLowerCase();
 
-      if (!email) return setResult("Enter your email.", true);
-      if (!temp) return setResult("Enter the temporary password you received.", true);
-      if (!pw || !pw2) return setResult("Enter your new password twice.", true);
-      if (pw !== pw2) return setResult("New passwords do not match.", true);
-      if (pw.length < 8) return setResult("Password must be at least 8 characters.", true);
+      if (!email) return setStep2("Enter your email.", true);
+      if (!temp) return setStep2("Enter the temporary password you received.", true);
+      if (!pw || !pw2) return setStep2("Enter your new password twice.", true);
+      if (pw !== pw2) return setStep2("New passwords do not match.", true);
+      if (pw.length < 8) return setStep2("Password must be at least 8 characters.", true);
 
       const hasNum = /[0-9]/.test(pw);
       const hasSpec = /[^A-Za-z0-9]/.test(pw);
-      if (!hasNum || !hasSpec) return setResult("Include at least 1 number and 1 special character.", true);
+      if (!hasNum || !hasSpec) return setStep2("Include at least 1 number and 1 special character.", true);
 
-      setResult("Setting password…");
+      setStep2("Setting password…");
 
       // ✅ ensure canonical email is persisted at the moment of final confirmation
       persistCanonicalEmail(email);
@@ -342,7 +358,7 @@
         });
 
         const data = await r.json().catch(() => ({}));
-        if (!r.ok) return setResult(data.error || "Failed to set password.", true);
+        if (!r.ok) return setStep2(data.error || "Failed to set password.", true);
 
         // cleanup staged payload (keep email)
         sessionStorage.removeItem("wnp_payload");
@@ -356,17 +372,9 @@
         // auto -> canonical router
         window.location.href = "member-access.html";
       } catch (e) {
-        setResult("Network error. Try again.", true);
+        setStep2("Network error. Try again.", true);
       }
     };
   </script>
-
-  <style>
-    .btn-disabled{
-      opacity:.45;
-      filter: grayscale(35%);
-      cursor:not-allowed !important;
-    }
-  </style>
 </body>
 </html>
