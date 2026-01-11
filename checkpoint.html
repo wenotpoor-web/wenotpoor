@@ -130,7 +130,20 @@
       font-weight:700;
       font-size:13px;
       line-height:1.35;
+      white-space:pre-wrap;
     }
+
+    /* Small helper link under email */
+    .miniLink{
+      display:inline-block;
+      margin-top:8px;
+      font-size:12px;
+      font-weight:700;
+      color:rgba(255,255,255,.65);
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+    .miniLink:hover{ color:#fff; }
   </style>
 </head>
 
@@ -153,9 +166,10 @@
     <section class="card">
 
       <!-- EMAIL -->
-      <div class="field-block">
+      <div class="field-block" id="emailBlock">
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="email" />
+        <!-- injected "Clear email" link goes here -->
       </div>
 
       <!-- UPLOAD -->
@@ -220,6 +234,8 @@
   const $ = (id) => document.getElementById(id);
 
   const emailEl = $("email");
+  const emailBlock = $("emailBlock");
+
   const fileEl = $("file");
   const answerEl = $("answer");
   const confirmEl = $("confirm");
@@ -251,15 +267,42 @@
     uploadHint.textContent = msg;
   }
 
+  // ✅ UPDATED: Prefill from URL/localStorage BUT keep editable
   function setEmail(){
     const p = new URLSearchParams(location.search);
-    const e = normalizeEmail(p.get("email") || p.get("e") || "") || normalizeEmail(localStorage.getItem("wnp_email") || "");
-    if (e) {
-      emailEl.value = e;
-      emailEl.disabled = true;
-      localStorage.setItem("wnp_email", e);
-    } else {
-      emailEl.disabled = false;
+    const initial =
+      normalizeEmail(p.get("email") || p.get("e") || "") ||
+      normalizeEmail(localStorage.getItem("wnp_email") || "");
+
+    if (initial) emailEl.value = initial;
+
+    // always editable
+    emailEl.disabled = false;
+
+    // persist as they type
+    emailEl.addEventListener("input", () => {
+      const v = normalizeEmail(emailEl.value);
+      if (v) localStorage.setItem("wnp_email", v);
+      refresh();
+    });
+
+    // small "Clear email" link (one-time)
+    if (emailBlock && !document.getElementById("clearEmailLink")) {
+      const a = document.createElement("a");
+      a.id = "clearEmailLink";
+      a.href = "#";
+      a.className = "miniLink";
+      a.textContent = "Clear email";
+
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("wnp_email");
+        emailEl.value = "";
+        emailEl.focus();
+        refresh();
+      });
+
+      emailBlock.appendChild(a);
     }
   }
 
@@ -298,8 +341,6 @@
   function safeJsonParse(text){
     if (!text) return null;
     try { return JSON.parse(text); } catch {}
-
-    // Sometimes APIs return leading text + JSON at the end. Try to carve JSON out.
     const first = text.indexOf("{");
     const last = text.lastIndexOf("}");
     if (first !== -1 && last !== -1 && last > first) {
@@ -313,7 +354,6 @@
     const img = [];
     let ck = "";
 
-    // Prefer object extraction if available
     if (obj && typeof obj === "object") {
       if (Array.isArray(obj.keys)) img.push(...obj.keys.filter(Boolean));
       if (typeof obj.key === "string" && obj.key) img.push(obj.key);
@@ -325,9 +365,7 @@
       return { img, ck };
     }
 
-    // Fallback: regex extraction from raw text
     const raw = String(text || "");
-
     const mCk = raw.match(/"checkpoint_key"\s*:\s*"([^"]+)"/);
     if (mCk && mCk[1]) ck = mCk[1];
 
@@ -337,10 +375,8 @@
     const mKeys = raw.match(/"keys"\s*:\s*\[\s*"([^"]+)"/);
     if (mKeys && mKeys[1]) img.push(mKeys[1]);
 
-    // If response is just a bare key string
     if (!ck && !img.length) {
       const trimmed = raw.trim();
-      // crude but safe: accept a single non-empty line w/o spaces
       if (trimmed && trimmed.length < 512 && !/\s/.test(trimmed) && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
         img.push(trimmed);
         ck = trimmed;
@@ -364,7 +400,10 @@
 
     let r, text;
     try {
-      r = await fetch("/api/uploads?kind=checkpoint",{
+      // Worker expects multipart form with file AND kind IN FORM DATA
+      fd.append("kind", "checkpoint");
+
+      r = await fetch("/api/uploads",{
         method:"POST",
         body:fd,
         credentials:"include"
@@ -376,8 +415,7 @@
     }
 
     if(!r.ok){
-      // show server error lightly
-      const msg = text ? `Upload failed. ${text}` : "Upload failed. Please try again.";
+      const msg = text ? `Upload failed.\n${text}` : "Upload failed. Please try again.";
       showUploadHint(msg);
       return refresh();
     }
@@ -394,7 +432,6 @@
       return refresh();
     }
 
-    // Success
     showUploadHint("");
     refresh();
 
@@ -418,8 +455,10 @@
       confirmed: !!confirmEl.checked
     };
 
+    // Worker’s auto-checkpoint endpoint requires checkpoint_key
+    // Use checkpointKey if available; else fall back to first image key
+    payload.checkpoint_key = checkpointKey || imageKeys[0] || "";
     if (imageKeys.length) payload.image_keys = imageKeys;
-    if (checkpointKey) payload.checkpoint_key = checkpointKey;
 
     const r = await fetch("/api/auto-checkpoint/submit",{
       method:"POST",
