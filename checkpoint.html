@@ -28,8 +28,34 @@
       border-radius: 999px;
     }
 
+    /* Keep general label rhythm, but tighten the very first one */
     label{ margin-top: 18px; }
+
+    /* ✅ FIX: remove extra space above Email (first field inside the card) */
+    .card .field-block:first-child{ margin-top: 0 !important; }
+    .card .field-block:first-child label{ margin-top: 0 !important; }
+
     .questionBox{ margin-top: 10px; margin-bottom: 8px; }
+
+    /* ✅ Make "Question" stand out more */
+    .questionLabel{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top: 18px;
+      font-weight: 950;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+    .questionLabel::before{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,212,0,.95);
+      box-shadow: 0 0 0 3px rgba(255,212,0,.12);
+      flex: 0 0 auto;
+    }
 
     /* Checkbox row */
     .checkline{
@@ -52,7 +78,7 @@
     }
     .checkTitle{ font-weight:900; }
 
-    /* ✅ Center buttons */
+    /* Center buttons */
     .btnrow{
       display:flex;
       justify-content:center;
@@ -62,7 +88,7 @@
       margin-top:22px;
     }
 
-    /* ✅ Disabled state: cannot be clicked */
+    /* Disabled state: cannot be clicked */
     #crossBtn:disabled{
       opacity:.45;
       cursor:not-allowed;
@@ -70,20 +96,13 @@
       filter: grayscale(15%);
     }
 
-    /* ✅ Enabled state: RED + WHITE letters */
+    /* Enabled state: RED + WHITE letters */
     #crossBtn.ready{
       background:#FF2A2A !important;
       color:#FFFFFF !important;
       border:1px solid rgba(255,42,42,.8);
     }
-    #crossBtn.ready:hover{
-      filter: brightness(1.05);
-    }
-
-    /* ✅ Make email clearly editable */
-    #email{
-      width:100%;
-    }
+    #crossBtn.ready:hover{ filter: brightness(1.05); }
   </style>
 </head>
 
@@ -106,19 +125,24 @@
     <section class="card">
       <div class="field-block">
         <label for="email">Email</label>
-        <!-- ✅ NO MORE disabling this field -->
         <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <div class="fine">Use the same email you want tied to your membership.</div>
       </div>
 
       <div class="field-block">
-        <label for="file">Please upload a clear photo of your physical book showing the checkpoint page (the printed checkpoint inside your copy).</label>
+        <div class="fine" style="margin-top:0;">
+          Please upload a clear photo of <b>your physical book</b> showing the checkpoint page
+          (the printed checkpoint inside your copy).
+        </div>
+        <label for="file">Upload Photo (Proof)</label>
         <input id="file" type="file" accept="image/*" />
       </div>
 
       <div class="divider" aria-hidden="true"></div>
 
       <div class="field-block">
-        <label>Question</label>
+        <!-- ✅ Styled label -->
+        <div class="questionLabel">Question</div>
         <div id="questionText" class="questionBox">
           What is the one belief you are refusing to let die — even though it’s costing you your future?
         </div>
@@ -162,43 +186,32 @@
   let uploadedKeys = [];
   let lastUploadOk = false;
 
-  // ===== Email carry-forward logic =====
-  // Priority:
-  //  1) checkpoint.html?email=... (or ?e=...)
-  //  2) sessionStorage wnp_email
-  //  3) localStorage wnp_email
+  // Email carry-forward logic:
+  // 1) ?email= / ?e=
+  // 2) sessionStorage wnp_email
+  // 3) localStorage wnp_email
   function getEmailFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return (params.get("email") || params.get("e") || "").trim();
   }
-
-  function normalizeEmail(v) {
-    return (v || "").trim().toLowerCase();
-  }
-
+  function normalizeEmail(v) { return (v || "").trim().toLowerCase(); }
   function loadCarryEmail() {
     const fromUrl = normalizeEmail(getEmailFromUrl());
     const fromSession = normalizeEmail(sessionStorage.getItem("wnp_email") || "");
     const fromLocal = normalizeEmail(localStorage.getItem("wnp_email") || "");
     return fromUrl || fromSession || fromLocal || "";
   }
-
   function applyCarryEmail() {
     const email = loadCarryEmail();
-    if (email) emailEl.value = email;
-
-    // ✅ DO NOT DISABLE OR LOCK. Allow edits here.
-    emailEl.disabled = false;
-    emailEl.readOnly = false;
-
-    // Keep storage aligned with what is displayed
     if (email) {
+      emailEl.value = email;
       sessionStorage.setItem("wnp_email", email);
       localStorage.setItem("wnp_email", email);
     }
+    emailEl.disabled = false;
+    emailEl.readOnly = false;
   }
 
-  // If user edits the email here, treat that as the new truth for this browser
   emailEl.addEventListener("input", () => {
     const v = normalizeEmail(emailEl.value);
     if (v) {
@@ -208,14 +221,11 @@
     setCrossState();
   });
 
-  // ===== Gate: all submissions complete =====
   function allComplete() {
     const email = normalizeEmail(emailEl.value);
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
-
-    // Must have successful /api/uploads result
     return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
@@ -223,7 +233,7 @@
     const ok = allComplete();
     crossBtn.disabled = !ok;
     crossBtn.setAttribute("aria-disabled", String(!ok));
-    crossBtn.classList.toggle("ready", ok); // ✅ turns red/white when selectable
+    crossBtn.classList.toggle("ready", ok);
   }
 
   async function uploadCheckpointImage() {
@@ -273,7 +283,6 @@
   }
 
   async function submitAutoCheckpoint() {
-    // ✅ hard gate (even if someone removes disabled in devtools)
     if (!allComplete()) return;
 
     const email = normalizeEmail(emailEl.value);
@@ -294,11 +303,9 @@
 
     if (!res.ok) return;
 
-    // ✅ carry forward email to email-setup
     window.location.href = `email-setup.html?email=${encodeURIComponent(email)}`;
   }
 
-  // Events
   fileEl.addEventListener("change", async () => {
     uploadedKeys = [];
     lastUploadOk = false;
@@ -320,7 +327,6 @@
   });
 
   resetBtn.addEventListener("click", () => {
-    // ✅ Keep email (editable + carried forward)
     fileEl.value = "";
     answerEl.value = "";
     confirmEl.checked = false;
@@ -329,7 +335,6 @@
     setCrossState();
   });
 
-  // init
   applyCarryEmail();
   setCrossState();
 })();
