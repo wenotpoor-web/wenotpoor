@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css?v=wnp16" />
 
   <style>
-    /* Center hero like your other pages */
     .hero.hero-center{ text-align:center; }
     .hero.hero-center .brand-wrap{ align-items:center; }
     .hero.hero-center .brand-accent{ margin:0 auto; }
@@ -17,7 +16,6 @@
       margin-right:auto;
     }
 
-    /* Section spacing */
     .field-block{ margin-top: 18px; }
     .fine{ margin-top: 10px; line-height: 1.4; }
 
@@ -28,10 +26,9 @@
       border-radius: 999px;
     }
 
-    /* Keep general label rhythm, but tighten the very first one */
     label{ margin-top: 18px; }
 
-    /* ✅ FIX: remove extra space above Email (first field inside the card) */
+    /* ✅ FIX: remove extra space above Email */
     .card .field-block:first-child{ margin-top: 0 !important; }
     .card .field-block:first-child label{ margin-top: 0 !important; }
 
@@ -57,7 +54,6 @@
       flex: 0 0 auto;
     }
 
-    /* Checkbox row */
     .checkline{
       display:flex;
       gap:12px;
@@ -78,7 +74,6 @@
     }
     .checkTitle{ font-weight:900; }
 
-    /* Center buttons */
     .btnrow{
       display:flex;
       justify-content:center;
@@ -88,7 +83,6 @@
       margin-top:22px;
     }
 
-    /* Disabled state: cannot be clicked */
     #crossBtn:disabled{
       opacity:.45;
       cursor:not-allowed;
@@ -96,13 +90,27 @@
       filter: grayscale(15%);
     }
 
-    /* Enabled state: RED + WHITE letters */
     #crossBtn.ready{
       background:#FF2A2A !important;
       color:#FFFFFF !important;
       border:1px solid rgba(255,42,42,.8);
     }
     #crossBtn.ready:hover{ filter: brightness(1.05); }
+
+    /* Tiny debug line (only shows on error) */
+    .mini-debug{
+      display:none;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,42,42,.55);
+      color:#ffd0d0;
+      background: rgba(0,0,0,.35);
+      font-size:12px;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .mini-debug.show{ display:block; }
   </style>
 </head>
 
@@ -126,19 +134,22 @@
       <div class="field-block">
         <label for="email">Email</label>
         <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <div class="fine">Use the same email you want tied to your membership.</div>
       </div>
 
       <div class="field-block">
         <div class="fine" style="margin-top:0;">
-        <label for="file">Please upload a clear photo of <b>your physical book</b> showing the checkpoint page
-          (the printed checkpoint inside your copy).</label>
+          Please upload a clear photo of <b>your physical book</b> showing the checkpoint page
+          (the printed checkpoint inside your copy).
+        </div>
+        <label for="file">Upload Photo (Proof)</label>
         <input id="file" type="file" accept="image/*" />
+        <div id="debug" class="mini-debug"></div>
       </div>
 
       <div class="divider" aria-hidden="true"></div>
 
       <div class="field-block">
-        <!-- ✅ Styled label -->
         <div class="questionLabel">Question</div>
         <div id="questionText" class="questionBox">
           What is the one belief you are refusing to let die — even though it’s costing you your future?
@@ -176,6 +187,7 @@
   const crossBtn = $("crossBtn");
   const resetBtn = $("resetBtn");
   const questionTextEl = $("questionText");
+  const debugEl = $("debug");
 
   const CHECKPOINT_ID = "checkpoint_1";
   const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
@@ -183,10 +195,14 @@
   let uploadedKeys = [];
   let lastUploadOk = false;
 
-  // Email carry-forward logic:
-  // 1) ?email= / ?e=
-  // 2) sessionStorage wnp_email
-  // 3) localStorage wnp_email
+  function showDebug(msg="") {
+    if (!debugEl) return;
+    if (!msg) { debugEl.textContent=""; debugEl.classList.remove("show"); return; }
+    debugEl.textContent = msg;
+    debugEl.classList.add("show");
+  }
+
+  // Carry email: url -> session -> local
   function getEmailFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return (params.get("email") || params.get("e") || "").trim();
@@ -223,6 +239,7 @@
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
+
     return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
@@ -233,41 +250,92 @@
     crossBtn.classList.toggle("ready", ok);
   }
 
+  // ✅ Robust key extraction for MANY Worker response shapes
+  function extractKeysFromResponse(data, rawText) {
+    const keys = [];
+
+    // If JSON object
+    if (data && typeof data === "object") {
+      const candidates = [
+        data.keys,
+        data.key,
+        data.image_keys,
+        data.image_key,
+        data.r2_keys,
+        data.r2_key,
+        data.upload_keys,
+        data.upload_key,
+        data.file_keys,
+        data.file_key,
+        data.result && data.result.keys,
+        data.result && data.result.key,
+      ];
+
+      for (const c of candidates) {
+        if (Array.isArray(c)) keys.push(...c.filter(Boolean));
+        else if (typeof c === "string" && c.trim()) keys.push(c.trim());
+      }
+    }
+
+    // If nothing found, treat raw text as a single key (some endpoints return plain text)
+    if (keys.length === 0 && typeof rawText === "string") {
+      const t = rawText.trim();
+      // Avoid treating JSON text as a key
+      if (t && !(t.startsWith("{") && t.endsWith("}")) && !(t.startsWith("[") && t.endsWith("]"))) {
+        keys.push(t);
+      }
+    }
+
+    // Deduplicate
+    return [...new Set(keys)];
+  }
+
   async function uploadCheckpointImage() {
     uploadedKeys = [];
     lastUploadOk = false;
+    showDebug("");
     setCrossState();
 
     const file = fileEl.files?.[0];
     if (!file) return;
 
     const fd = new FormData();
-    fd.append("file", file);
+    fd.append("file", file); // if your Worker expects a different field name, tell me and I'll match it
 
-    const res = await fetch(`/api/uploads?kind=checkpoint`, {
-      method: "POST",
-      body: fd,
-      credentials: "include",
-    });
-
-    const text = await res.text();
-    let data = null;
-    try { data = JSON.parse(text); } catch {}
-
-    if (!res.ok) {
+    let res, rawText, data = null;
+    try {
+      res = await fetch(`/api/uploads?kind=checkpoint`, {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      rawText = await res.text();
+      try { data = JSON.parse(rawText); } catch {}
+    } catch (e) {
+      showDebug("Upload error: network/request failed.");
       uploadedKeys = [];
       lastUploadOk = false;
       setCrossState();
       return;
     }
 
-    const keys = [];
-    if (data) {
-      if (Array.isArray(data.keys)) keys.push(...data.keys);
-      if (typeof data.key === "string") keys.push(data.key);
+    if (!res.ok) {
+      showDebug(`Upload failed (${res.status}).\n${rawText || ""}`);
+      uploadedKeys = [];
+      lastUploadOk = false;
+      setCrossState();
+      return;
     }
 
+    const keys = extractKeysFromResponse(data, rawText);
+
     if (!keys.length) {
+      // show a helpful hint
+      showDebug(
+        "Upload succeeded but returned no key.\n" +
+        "This means /api/uploads is responding in a format the page didn’t recognize.\n\n" +
+        "Response was:\n" + (rawText || "[empty]")
+      );
       uploadedKeys = [];
       lastUploadOk = false;
       setCrossState();
@@ -276,6 +344,7 @@
 
     uploadedKeys = keys;
     lastUploadOk = true;
+    showDebug(""); // keep clean on success
     setCrossState();
   }
 
@@ -298,18 +367,25 @@
       }),
     });
 
-    if (!res.ok) return;
+    if (!res.ok) {
+      // If submit fails, show minimal debug
+      const t = await res.text().catch(() => "");
+      showDebug(`Submit failed (${res.status}).\n${t || ""}`);
+      return;
+    }
 
     window.location.href = `email-setup.html?email=${encodeURIComponent(email)}`;
   }
 
+  // Events
   fileEl.addEventListener("change", async () => {
     uploadedKeys = [];
     lastUploadOk = false;
+    showDebug("");
     setCrossState();
 
     if (fileEl.files?.length) {
-      try { await uploadCheckpointImage(); } catch { setCrossState(); }
+      await uploadCheckpointImage();
     }
   });
 
@@ -320,7 +396,7 @@
 
   crossBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    try { await submitAutoCheckpoint(); } catch {}
+    await submitAutoCheckpoint();
   });
 
   resetBtn.addEventListener("click", () => {
@@ -329,9 +405,11 @@
     confirmEl.checked = false;
     uploadedKeys = [];
     lastUploadOk = false;
+    showDebug("");
     setCrossState();
   });
 
+  // init
   applyCarryEmail();
   setCrossState();
 })();
