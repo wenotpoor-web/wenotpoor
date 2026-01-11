@@ -10,8 +10,12 @@
   <style>
     /* ---------- HERO CENTERING ---------- */
     .hero.hero-center{ text-align:center; }
-    .hero.hero-center .brand-wrap{ align-items:center; }
-    .hero.hero-center .brand-accent{ margin:0 auto; }
+    .hero.hero-center .brand-wrap{ align-items:flex-start; }
+    /* Force accent UNDER "WE NOT" (left aligned under brand) */
+    .hero.hero-center .brand-accent{
+      margin:0;
+      margin-left:2px;
+    }
     .hero.hero-center .sub{
       max-width:760px;
       margin:0 auto;
@@ -20,18 +24,12 @@
     /* ---------- LABEL → INPUT CUSHION ---------- */
     section.card label{
       display:block;
-      margin-bottom:6px !important;   /* thin cushion */
+      margin:0 0 6px !important;   /* ✅ remove extra space above + thin cushion below */
       line-height:1.15;
       font-weight:800;
     }
-    section.card input[type="email"],
-    section.card input[type="text"],
-    section.card input[type="file"]{
-      margin-top:0 !important;
-    }
-
-    /* ---------- FIELD BLOCK SPACING ---------- */
-    .field-block{ margin-top:16px; }
+    section.card .field-block{ margin-top:14px; } /* slightly tighter */
+    section.card .field-block:first-child{ margin-top:0; } /* ✅ fixes big space above Email */
     .fine{ margin-top:8px; line-height:1.4; }
 
     /* ---------- DIVIDER ---------- */
@@ -48,8 +46,8 @@
       align-items:center;
       gap:10px;
       font-weight:900;
-      letter-spacing:.6px;
-      margin-bottom:6px;
+      letter-spacing:.10em;
+      margin:0 0 10px;            /* a little more stand-out */
       text-transform:uppercase;
     }
     .question-dot{
@@ -58,11 +56,18 @@
       box-shadow:0 0 0 3px rgba(255,212,0,.18);
       flex:0 0 auto;
     }
+
+    /* Make the question sentence look like instruction text (NOT bold) with ONLY <b> bold */
     .questionBox{
-      margin-top:8px;
+      margin-top:0;
       margin-bottom:12px;
-      font-weight:700;
-      line-height:1.35;
+      font-weight:600 !important;          /* ✅ not bold */
+      text-transform:none !important;
+      letter-spacing:0 !important;
+      line-height:1.45;
+    }
+    .questionBox b{
+      font-weight:900 !important;          /* ✅ if you ever bold a phrase inside */
     }
 
     /* ---------- CHECKBOX ---------- */
@@ -88,7 +93,8 @@
     /* ---------- BUTTON ROW ---------- */
     .btnrow{
       display:flex;
-      justify-content:center;
+      justify-content:center;  /* ✅ centered */
+      align-items:center;
       gap:14px;
       margin-top:22px;
       flex-wrap:wrap;
@@ -131,6 +137,11 @@
 
     /* Hide any "Uploaded" status indicator if it exists */
     #uploadedBadge, .badge, .badge.ok{ display:none !important; }
+
+    /* IMPORTANT: sentence-style instruction blocks (not labels) */
+    .upload-instruction{
+      margin:0 0 10px;
+    }
   </style>
 </head>
 
@@ -159,23 +170,21 @@
         <input id="email" type="email" autocomplete="email" />
       </div>
 
-      <!-- UPLOAD -->
+      <!-- UPLOAD (✅ instruction NOT a label; only <b> is bold via CSS you’ll paste) -->
       <div class="field-block">
-        <div class="fine" style="margin-top:0;">
+        <div class="upload-instruction">
+          Please upload a clear photo of <b>your physical book</b> showing the checkpoint page
+          (the printed checkpoint inside your copy).
         </div>
 
-        <label for="file" class="upload-instruction">
-        Please upload a clear photo of <b>your physical book</b> showing the checkpoint page (the printed checkpoint inside your copy).
-        </label>
-
+        <label for="file">Upload Photo (Proof)</label>
         <input id="file" type="file" accept="image/*" />
 
         <div class="uploadRow" aria-live="polite">
           <div id="thumb" class="thumb">
             <img id="thumbImg" alt="Upload preview" />
           </div>
-          <div class="thumbMeta">
-          </div>
+          <div class="thumbMeta"></div>
         </div>
       </div>
 
@@ -187,6 +196,8 @@
           <span class="question-dot"></span>
           <span>QUESTION</span>
         </div>
+
+        <!-- ✅ Also apply “sentence not bold; only <b> bold” behavior here -->
         <div id="questionText" class="questionBox">
           What is the one belief you are refusing to let die — even though it’s costing you your future?
         </div>
@@ -241,14 +252,14 @@
 
   function getEmailFromUrl(){
     const p = new URLSearchParams(location.search);
-    return (p.get("email") || "").trim();
+    return (p.get("email") || p.get("e") || "").trim();
   }
 
   function setEmail(){
     const e = normalizeEmail(getEmailFromUrl()) || normalizeEmail(localStorage.getItem("wnp_email") || "");
     if(e){
       emailEl.value = e;
-      emailEl.disabled = true;
+      emailEl.disabled = true;              // follows your “carry email forward” behavior
       localStorage.setItem("wnp_email", e);
     } else {
       emailEl.disabled = false;
