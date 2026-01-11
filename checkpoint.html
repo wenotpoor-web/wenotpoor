@@ -55,18 +55,18 @@
     /* ✅ Center buttons */
     .btnrow{
       display:flex;
-      justify-content:center;   /* ✅ centered */
+      justify-content:center;
       align-items:center;
       gap:12px;
       flex-wrap:wrap;
       margin-top:22px;
     }
 
-    /* ✅ Disabled state stays non-selectable */
+    /* ✅ Disabled state: cannot be clicked */
     #crossBtn:disabled{
       opacity:.45;
       cursor:not-allowed;
-      pointer-events:none;      /* ✅ cannot be clicked */
+      pointer-events:none;
       filter: grayscale(15%);
     }
 
@@ -78,6 +78,11 @@
     }
     #crossBtn.ready:hover{
       filter: brightness(1.05);
+    }
+
+    /* ✅ Make email clearly editable */
+    #email{
+      width:100%;
     }
   </style>
 </head>
@@ -101,7 +106,9 @@
     <section class="card">
       <div class="field-block">
         <label for="email">Email</label>
+        <!-- ✅ NO MORE disabling this field -->
         <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <div class="fine">Use the same email you want tied to your membership.</div>
       </div>
 
       <div class="field-block">
@@ -160,37 +167,60 @@
   let uploadedKeys = [];
   let lastUploadOk = false;
 
+  // ===== Email carry-forward logic =====
+  // Priority:
+  //  1) checkpoint.html?email=... (or ?e=...)
+  //  2) sessionStorage wnp_email
+  //  3) localStorage wnp_email
   function getEmailFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return (params.get("email") || params.get("e") || "").trim();
   }
 
-  function setEmailFromRegister() {
-    const fromUrl = getEmailFromUrl();
-    const fromStorage = (localStorage.getItem("wnp_email") || "").trim();
-    const email = fromUrl || fromStorage;
+  function normalizeEmail(v) {
+    return (v || "").trim().toLowerCase();
+  }
 
+  function loadCarryEmail() {
+    const fromUrl = normalizeEmail(getEmailFromUrl());
+    const fromSession = normalizeEmail(sessionStorage.getItem("wnp_email") || "");
+    const fromLocal = normalizeEmail(localStorage.getItem("wnp_email") || "");
+    return fromUrl || fromSession || fromLocal || "";
+  }
+
+  function applyCarryEmail() {
+    const email = loadCarryEmail();
+    if (email) emailEl.value = email;
+
+    // ✅ DO NOT DISABLE OR LOCK. Allow edits here.
+    emailEl.disabled = false;
+    emailEl.readOnly = false;
+
+    // Keep storage aligned with what is displayed
     if (email) {
-      emailEl.value = email;
-      emailEl.disabled = true;
+      sessionStorage.setItem("wnp_email", email);
       localStorage.setItem("wnp_email", email);
-    } else {
-      emailEl.disabled = false;
     }
   }
 
+  // If user edits the email here, treat that as the new truth for this browser
+  emailEl.addEventListener("input", () => {
+    const v = normalizeEmail(emailEl.value);
+    if (v) {
+      sessionStorage.setItem("wnp_email", v);
+      localStorage.setItem("wnp_email", v);
+    }
+    setCrossState();
+  });
+
+  // ===== Gate: all submissions complete =====
   function allComplete() {
-    const email = (emailEl.value || "").trim();
+    const email = normalizeEmail(emailEl.value);
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
 
-    // ✅ this is the real "all submissions completed" gate:
-    // - email present
-    // - file selected
-    // - upload to /api/uploads succeeded (lastUploadOk + uploadedKeys)
-    // - answer entered
-    // - confirm checkbox checked
+    // Must have successful /api/uploads result
     return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
@@ -248,10 +278,10 @@
   }
 
   async function submitAutoCheckpoint() {
-    // hard gate (even if someone removes disabled in devtools)
+    // ✅ hard gate (even if someone removes disabled in devtools)
     if (!allComplete()) return;
 
-    const email = (emailEl.value || "").trim();
+    const email = normalizeEmail(emailEl.value);
     const answer = (answerEl.value || "").trim();
 
     const res = await fetch(`/api/auto-checkpoint/submit`, {
@@ -269,6 +299,7 @@
 
     if (!res.ok) return;
 
+    // ✅ carry forward email to email-setup
     window.location.href = `email-setup.html?email=${encodeURIComponent(email)}`;
   }
 
@@ -286,7 +317,6 @@
   ["input","change","keyup"].forEach(evt => {
     answerEl.addEventListener(evt, setCrossState);
     confirmEl.addEventListener(evt, setCrossState);
-    emailEl.addEventListener(evt, setCrossState);
   });
 
   crossBtn.addEventListener("click", async (e) => {
@@ -295,7 +325,7 @@
   });
 
   resetBtn.addEventListener("click", () => {
-    // Keep email (carried from register)
+    // ✅ Keep email (editable + carried forward)
     fileEl.value = "";
     answerEl.value = "";
     confirmEl.checked = false;
@@ -305,7 +335,7 @@
   });
 
   // init
-  setEmailFromRegister();
+  applyCarryEmail();
   setCrossState();
 })();
 </script>
