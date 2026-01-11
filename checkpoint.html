@@ -7,24 +7,23 @@
   <link rel="stylesheet" href="style.css?v=wnp16" />
 
   <style>
-    /* ---------- HERO CENTERING ---------- */
     .hero.hero-center{ text-align:center; }
     .hero.hero-center .brand-wrap{ align-items:flex-start; }
     .hero.hero-center .brand-accent{ margin:0; margin-left:2px; }
     .hero.hero-center .sub{ max-width:760px; margin:0 auto; }
 
-    /* ---------- FIELD SPACING ---------- */
     .field-block{ margin-top:14px; }
     .field-block:first-child{ margin-top:0; }
+
     section.card label{
       display:block;
       margin:0 0 6px !important;
       line-height:1.15;
       font-weight:800;
     }
+
     .fine{ margin-top:8px; line-height:1.4; }
 
-    /* ---------- DIVIDER ---------- */
     .divider{
       height:1px;
       background:rgba(255,212,0,.22);
@@ -32,7 +31,6 @@
       border-radius:999px;
     }
 
-    /* ---------- QUESTION EMPHASIS ---------- */
     .question-label{
       display:flex;
       align-items:center;
@@ -56,7 +54,6 @@
       line-height:1.45;
     }
 
-    /* ---------- CHECKBOX ---------- */
     .checkline{
       display:flex;
       gap:12px;
@@ -76,7 +73,6 @@
     }
     .checkTitle{ font-weight:900; }
 
-    /* ---------- BUTTON ROW ---------- */
     .btnrow{
       display:flex;
       justify-content:center;
@@ -96,7 +92,6 @@
       color:#fff;
     }
 
-    /* ---------- UPLOAD PREVIEW THUMB ---------- */
     .uploadRow{
       display:flex;
       gap:12px;
@@ -119,7 +114,6 @@
       display:block;
     }
 
-    /* Sentence instruction (not a label) */
     .upload-instruction{
       margin:0 0 10px;
       color:var(--muted);
@@ -127,6 +121,16 @@
       line-height:1.4;
     }
     .upload-instruction b{ font-weight:900; color:var(--textOnDark); }
+
+    /* Tiny hint only when needed (no big status box) */
+    #uploadHint{
+      display:none;
+      margin-top:8px;
+      color:rgba(255,42,42,.95);
+      font-weight:700;
+      font-size:13px;
+      line-height:1.35;
+    }
   </style>
 </head>
 
@@ -163,6 +167,8 @@
 
         <label for="file">Upload Photo (Proof)</label>
         <input id="file" type="file" accept="image/*" />
+
+        <div id="uploadHint"></div>
 
         <div class="uploadRow" aria-live="polite">
           <div id="thumb" class="thumb">
@@ -220,29 +226,36 @@
   const crossBtn = $("crossBtn");
   const resetBtn = $("resetBtn");
   const questionTextEl = $("questionText");
+
   const thumb = $("thumb");
   const thumbImg = $("thumbImg");
+  const uploadHint = $("uploadHint");
 
   const CHECKPOINT_ID = "checkpoint_1";
   const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
 
-  // We keep BOTH forms because your Worker has previously demanded checkpoint_key specifically.
-  let imageKeys = [];        // for Workers that accept image_keys
-  let checkpointKey = "";    // for Workers that accept checkpoint_key
+  let imageKeys = [];
+  let checkpointKey = "";
   let uploadOk = false;
 
   function normalizeEmail(v){ return (v || "").trim().toLowerCase(); }
 
-  function getEmailFromUrl(){
-    const p = new URLSearchParams(location.search);
-    return (p.get("email") || p.get("e") || "").trim();
+  function showUploadHint(msg){
+    if (!uploadHint) return;
+    if (!msg) {
+      uploadHint.style.display = "none";
+      uploadHint.textContent = "";
+      return;
+    }
+    uploadHint.style.display = "block";
+    uploadHint.textContent = msg;
   }
 
   function setEmail(){
-    const e = normalizeEmail(getEmailFromUrl()) || normalizeEmail(localStorage.getItem("wnp_email") || "");
+    const p = new URLSearchParams(location.search);
+    const e = normalizeEmail(p.get("email") || p.get("e") || "") || normalizeEmail(localStorage.getItem("wnp_email") || "");
     if (e) {
       emailEl.value = e;
-      // IMPORTANT: only lock if we actually have a carry-over email
       emailEl.disabled = true;
       localStorage.setItem("wnp_email", e);
     } else {
@@ -282,66 +295,114 @@
     uploadOk = false;
   }
 
-  function extractKeysFromUploadResponse(d){
-    // Accept multiple shapes:
-    // { key }, { keys }, { checkpoint_key }, { checkpoint_keys }
+  function safeJsonParse(text){
+    if (!text) return null;
+    try { return JSON.parse(text); } catch {}
+
+    // Sometimes APIs return leading text + JSON at the end. Try to carve JSON out.
+    const first = text.indexOf("{");
+    const last = text.lastIndexOf("}");
+    if (first !== -1 && last !== -1 && last > first) {
+      const slice = text.slice(first, last + 1);
+      try { return JSON.parse(slice); } catch {}
+    }
+    return null;
+  }
+
+  function extractKeysFromAny(text, obj){
     const img = [];
     let ck = "";
 
-    if (!d || typeof d !== "object") return { img, ck };
+    // Prefer object extraction if available
+    if (obj && typeof obj === "object") {
+      if (Array.isArray(obj.keys)) img.push(...obj.keys.filter(Boolean));
+      if (typeof obj.key === "string" && obj.key) img.push(obj.key);
 
-    if (Array.isArray(d.keys)) img.push(...d.keys.filter(Boolean));
-    if (typeof d.key === "string" && d.key) img.push(d.key);
+      if (Array.isArray(obj.checkpoint_keys)) ck = obj.checkpoint_keys.filter(Boolean)[0] || "";
+      if (typeof obj.checkpoint_key === "string" && obj.checkpoint_key) ck = obj.checkpoint_key;
 
-    if (Array.isArray(d.checkpoint_keys)) ck = d.checkpoint_keys.filter(Boolean)[0] || "";
-    if (typeof d.checkpoint_key === "string" && d.checkpoint_key) ck = d.checkpoint_key;
+      if (!ck && img.length === 1) ck = img[0];
+      return { img, ck };
+    }
 
-    // Fallback: if Worker returns only one key, treat it as both
+    // Fallback: regex extraction from raw text
+    const raw = String(text || "");
+
+    const mCk = raw.match(/"checkpoint_key"\s*:\s*"([^"]+)"/);
+    if (mCk && mCk[1]) ck = mCk[1];
+
+    const mKey = raw.match(/"key"\s*:\s*"([^"]+)"/);
+    if (mKey && mKey[1]) img.push(mKey[1]);
+
+    const mKeys = raw.match(/"keys"\s*:\s*\[\s*"([^"]+)"/);
+    if (mKeys && mKeys[1]) img.push(mKeys[1]);
+
+    // If response is just a bare key string
+    if (!ck && !img.length) {
+      const trimmed = raw.trim();
+      // crude but safe: accept a single non-empty line w/o spaces
+      if (trimmed && trimmed.length < 512 && !/\s/.test(trimmed) && !trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+        img.push(trimmed);
+        ck = trimmed;
+      }
+    }
+
     if (!ck && img.length === 1) ck = img[0];
-
     return { img, ck };
   }
 
   async function upload(){
     resetUploadState();
+    showUploadHint("");
     refresh();
 
     const f = fileEl.files?.[0];
     if(!f) return;
 
     const fd = new FormData();
-    // Worker expects "file" (you previously got Missing kind or file)
     fd.append("file", f);
 
-    const r = await fetch("/api/uploads?kind=checkpoint",{
-      method:"POST",
-      body:fd,
-      credentials:"include"
-    });
-
-    const text = await r.text();
-    let d = null;
-    try { d = JSON.parse(text); } catch {}
-
-    if(!r.ok){
-      // leave disabled; no status indicator shown
+    let r, text;
+    try {
+      r = await fetch("/api/uploads?kind=checkpoint",{
+        method:"POST",
+        body:fd,
+        credentials:"include"
+      });
+      text = await r.text();
+    } catch {
+      showUploadHint("Upload failed. Please check your connection and try again.");
       return refresh();
     }
 
-    const { img, ck } = extractKeysFromUploadResponse(d);
+    if(!r.ok){
+      // show server error lightly
+      const msg = text ? `Upload failed. ${text}` : "Upload failed. Please try again.";
+      showUploadHint(msg);
+      return refresh();
+    }
+
+    const obj = safeJsonParse(text);
+    const { img, ck } = extractKeysFromAny(text, obj);
+
     imageKeys = img;
     checkpointKey = ck;
-
     uploadOk = !!(checkpointKey || imageKeys.length > 0);
+
+    if (!uploadOk) {
+      showUploadHint("Upload completed, but no upload key was returned. Please choose the photo again and re-upload.");
+      return refresh();
+    }
+
+    // Success
+    showUploadHint("");
     refresh();
 
     // Auto-scroll to QUESTION after successful upload
-    if (uploadOk) {
-      setTimeout(() => {
-        const q = document.getElementById("questionSection");
-        if (q) q.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 200);
-    }
+    setTimeout(() => {
+      const q = document.getElementById("questionSection");
+      if (q) q.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
   }
 
   async function submit(){
@@ -357,7 +418,6 @@
       confirmed: !!confirmEl.checked
     };
 
-    // Send both so whichever your Worker requires is satisfied
     if (imageKeys.length) payload.image_keys = imageKeys;
     if (checkpointKey) payload.checkpoint_key = checkpointKey;
 
@@ -368,14 +428,11 @@
       body: JSON.stringify(payload)
     });
 
-    if(!r.ok){
-      return; // no status box; stays on page
-    }
+    if(!r.ok) return;
 
     location.href = "email-setup.html?email=" + encodeURIComponent(email);
   }
 
-  // Events
   fileEl.addEventListener("change", async () => {
     showThumbForFile(fileEl.files?.[0] || null);
     await upload();
@@ -393,14 +450,12 @@
   });
 
   resetBtn.addEventListener("click", () => {
-    // keep email if carried
     fileEl.value = "";
     showThumbForFile(null);
-
     answerEl.value = "";
     confirmEl.checked = false;
-
     resetUploadState();
+    showUploadHint("");
     refresh();
   });
 
