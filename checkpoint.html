@@ -9,59 +9,126 @@
     :root{
       --bg:#000;
       --panel:#0b0b0b;
+      --panel2:#000;
       --text:#FFD400;
       --muted:rgba(255,212,0,.75);
       --line:rgba(255,212,0,.22);
       --danger:#FF2A2A;
-      --radius:16px;
+      --good:#16c172;
+      --radius:18px;
       --font:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
-    .wrap{max-width:860px;margin:0 auto;padding:22px}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--font);
+    }
+    .wrap{
+      max-width:860px;
+      margin:0 auto;
+      padding:22px;
+    }
     .card{
-      background:var(--panel);
+      background:linear-gradient(180deg, rgba(255,212,0,.06), rgba(0,0,0,0) 32%), var(--panel);
       border:1px solid var(--line);
       border-radius:var(--radius);
-      padding:18px;
+      padding:20px;
+      box-shadow:0 0 0 1px rgba(0,0,0,.65) inset;
     }
-    h1{margin:0 0 10px;font-size:22px;letter-spacing:.4px}
-    p{margin:8px 0;color:var(--muted);line-height:1.35}
-    label{display:block;margin:14px 0 8px;color:var(--text);font-weight:600}
-    input[type="email"], input[type="text"], textarea, select{
+    h1{
+      margin:0 0 10px;
+      font-size:24px;
+      letter-spacing:.3px;
+    }
+    p{
+      margin:8px 0;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    label{
+      display:block;
+      margin:16px 0 8px;
+      color:var(--text);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .fine{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+    }
+
+    /* Inputs */
+    input[type="email"], input[type="text"], textarea{
       width:100%;
-      padding:12px 12px;
-      border-radius:12px;
+      padding:13px 14px;
+      border-radius:14px;
       border:1px solid var(--line);
       background:#000;
       color:var(--text);
       outline:none;
     }
+    input[type="email"]::placeholder,
+    input[type="text"]::placeholder,
+    textarea::placeholder{ color: rgba(255,212,0,.45); }
+
     input[type="file"]{
       width:100%;
-      padding:10px;
-      border-radius:12px;
+      padding:12px;
+      border-radius:14px;
       border:1px dashed var(--line);
       background:#000;
       color:var(--muted);
     }
-    .row{display:grid;grid-template-columns:1fr;gap:12px}
-    @media (min-width: 720px){
-      .row.two{grid-template-columns:1fr 1fr}
+
+    .questionBox{
+      margin-top:6px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.65);
+      color:var(--text);
+      font-weight:700;
+      line-height:1.35;
     }
 
+    /* Checkbox line */
     .checkline{
-      display:flex;gap:10px;align-items:flex-start;
-      margin-top:14px;padding:12px;border:1px solid var(--line);
-      border-radius:12px;background:#000;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      margin-top:16px;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#000;
     }
-    .checkline input{margin-top:2px}
+    .checkline input[type="checkbox"]{
+      width:18px;height:18px;
+      margin-top:3px;
+      accent-color: var(--text);
+    }
+    .checkTitle{
+      font-weight:900;
+      color:var(--text);
+    }
 
-    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    /* Buttons */
+    .btnrow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
     button{
-      appearance:none;border:0;border-radius:14px;
+      appearance:none;
+      border:0;
+      border-radius:16px;
       padding:12px 16px;
-      font-weight:800;
+      font-weight:900;
       cursor:pointer;
     }
     .btn{
@@ -77,20 +144,24 @@
       color:var(--text);
       border:1px solid var(--line);
     }
+
+    /* Status */
     .status{
-      margin-top:14px;
-      padding:12px;
-      border-radius:12px;
+      margin-top:16px;
+      padding:12px 14px;
+      border-radius:14px;
       border:1px solid var(--line);
       background:#000;
       color:var(--muted);
       white-space:pre-wrap;
       word-break:break-word;
-      min-height:44px;
+      min-height:46px;
     }
-    .status.bad{border-color:rgba(255,42,42,.5); color:#ffd0d0}
-    .status.good{border-color:rgba(22,193,114,.45); color:#c8ffe6}
-    .fine{font-size:12px;color:var(--muted);margin-top:10px}
+    .status.bad{ border-color:rgba(255,42,42,.55); color:#ffd0d0 }
+    .status.good{ border-color:rgba(22,193,114,.45); color:#c8ffe6 }
+
+    /* Small spacing helper */
+    .spacer{height:6px}
   </style>
 </head>
 
@@ -100,33 +171,26 @@
       <h1>Checkpoint Proof</h1>
       <p>Upload your checkpoint proof, answer the question, and confirm. When complete, <b>Cross The Line</b> will unlock.</p>
 
-      <div class="row two">
-        <div>
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-          <p class="fine">Use the same email you used to register your copy.</p>
-        </div>
-
-        <div>
-          <label for="checkpointId">Checkpoint</label>
-          <select id="checkpointId">
-            <option value="">Select…</option>
-            <option value="checkpoint_1">Checkpoint 1</option>
-          </select>
-          <p class="fine">If you later want this driven dynamically, we can wire it in — but it’s not required.</p>
-        </div>
-      </div>
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      <div class="fine">Use the same email you used to register your copy.</div>
 
       <label for="file">Upload Photo (Proof)</label>
       <input id="file" type="file" accept="image/*" />
 
-      <label for="answer">Answer the Question</label>
+      <label>Question</label>
+      <!-- ✅ PUT YOUR QUESTION TEXT RIGHT HERE -->
+      <div id="questionText" class="questionBox">
+        What is the one belief you are refusing to let die — even though it’s costing you your future?
+      </div>
+
+      <label for="answer">Your Answer</label>
       <input id="answer" type="text" placeholder="Type your answer here…" />
 
       <div class="checkline">
         <input id="confirm" type="checkbox" />
         <div>
-          <div style="font-weight:700;color:var(--text)">I confirm this is my real checkpoint proof.</div>
+          <div class="checkTitle">I confirm this is my real checkpoint proof.</div>
           <div class="fine">False submissions will be denied.</div>
         </div>
       </div>
@@ -145,15 +209,22 @@
   const $ = (id) => document.getElementById(id);
 
   const emailEl = $("email");
-  const checkpointEl = $("checkpointId");
   const fileEl = $("file");
   const answerEl = $("answer");
   const confirmEl = $("confirm");
   const crossBtn = $("crossBtn");
   const resetBtn = $("resetBtn");
   const statusEl = $("status");
+  const questionTextEl = $("questionText");
 
-  let uploadedKeys = []; // image_keys returned from /api/uploads
+  // Worker still expects checkpoint_id — we set it silently (no dropdown).
+  const CHECKPOINT_ID = "checkpoint_1";
+
+  // Optional: include question text in payload for your own auditing later.
+  // Worker may ignore it; it won't break anything.
+  const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
+
+  let uploadedKeys = [];
   let lastUploadOk = false;
 
   function setStatus(msg, kind = "") {
@@ -163,10 +234,9 @@
   }
 
   function canEnable() {
-    const hasFile = fileEl.files && fileEl.files.length > 0;
+    const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
-    const hasCheck = confirmEl.checked;
-    // require upload success too (so “complete” really means complete)
+    const hasCheck = !!confirmEl.checked;
     return hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
@@ -190,7 +260,6 @@
     const fd = new FormData();
     fd.append("file", file);
 
-    // ✅ Upload endpoint requested by you
     const res = await fetch(`/api/uploads?kind=checkpoint`, {
       method: "POST",
       body: fd,
@@ -207,7 +276,6 @@
       return;
     }
 
-    // Expecting a shape like: { ok:true, key:"...", keys:["..."] } (varies by your Worker)
     const keys = [];
     if (data) {
       if (Array.isArray(data.keys)) keys.push(...data.keys);
@@ -228,33 +296,29 @@
 
   async function submitAutoCheckpoint() {
     const email = (emailEl.value || "").trim();
-    const checkpoint_id = (checkpointEl.value || "").trim();
     const answer = (answerEl.value || "").trim();
 
     if (!email) { setStatus("Email is required.", "bad"); return; }
-    if (!checkpoint_id) { setStatus("Checkpoint selection is required.", "bad"); return; }
     if (!answer) { setStatus("Answer is required.", "bad"); return; }
     if (!confirmEl.checked) { setStatus("You must confirm.", "bad"); return; }
     if (!uploadedKeys.length) { setStatus("Upload your proof image first.", "bad"); return; }
 
     setStatus("Submitting checkpoint…");
 
-    // ✅ Submit endpoint requested by you
     const res = await fetch(`/api/auto-checkpoint/submit`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       credentials: "include",
       body: JSON.stringify({
         email,
-        checkpoint_id,
+        checkpoint_id: CHECKPOINT_ID,
         image_keys: uploadedKeys,
-        answer
+        answer,
+        question: QUESTION_TEXT
       }),
     });
 
     const text = await res.text();
-    let data = null;
-    try { data = JSON.parse(text); } catch {}
 
     if (!res.ok) {
       setStatus(`Submit failed (${res.status}).\n${text}`, "bad");
@@ -262,19 +326,17 @@
     }
 
     setStatus("Checkpoint accepted. Routing to Email Setup…", "good");
-
-    // ✅ Route requested by you
     setTimeout(() => {
       window.location.href = `email-setup.html`;
     }, 450);
   }
 
-  // --- Events ---
+  // Events
   fileEl.addEventListener("change", async () => {
-    // New file => require re-upload
     uploadedKeys = [];
     lastUploadOk = false;
     refreshButton();
+
     if (fileEl.files?.length) {
       try { await uploadCheckpointImage(); }
       catch (e) { setStatus(`Upload error:\n${String(e)}`, "bad"); }
@@ -284,7 +346,6 @@
   ["input","change","keyup"].forEach(evt => {
     answerEl.addEventListener(evt, refreshButton);
     emailEl.addEventListener(evt, refreshButton);
-    checkpointEl.addEventListener(evt, refreshButton);
     confirmEl.addEventListener(evt, refreshButton);
   });
 
@@ -296,7 +357,6 @@
 
   resetBtn.addEventListener("click", () => {
     emailEl.value = "";
-    checkpointEl.value = "";
     fileEl.value = "";
     answerEl.value = "";
     confirmEl.checked = false;
