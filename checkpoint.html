@@ -5,12 +5,49 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Show Your Work · WE NOT POOR</title>
   <link rel="stylesheet" href="style.css?v=wnp16" />
+
+  <!-- ✅ Small, safe overrides to "clean up formatting" without touching style.css -->
+  <style>
+    /* Center hero like your other pages */
+    .hero.hero-center{ text-align:center; }
+    .hero.hero-center .brand-wrap{ align-items:center; }
+    .hero.hero-center .brand-accent{ margin:0 auto; }
+    .hero.hero-center .sub{
+      max-width: 760px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    /* Ensure checkbox block looks clean even if style.css changed */
+    .checkline{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:14px;
+      border-radius:16px;
+    }
+    .checkline input[type="checkbox"]{
+      width:18px;height:18px;
+      margin-top:3px;
+      flex:0 0 auto;
+    }
+    .checkTitle{ font-weight:900; }
+
+    /* Make sure buttons don't run weird on small screens */
+    .btnrow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:16px;
+    }
+  </style>
 </head>
 
 <body class="wnp">
   <main class="wrap">
 
-    <header class="hero">
+    <!-- ✅ centered hero + cleaned text formatting -->
+    <header class="hero hero-center">
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
         <span class="brand-accent" aria-hidden="true"></span>
@@ -18,8 +55,8 @@
 
       <h1>SHOW YOUR WORK</h1>
       <p class="sub">
-       Upload or take a photo of a checkpoint you have completed, answer the question below, and confirm. When complete, Cross The Line will unlock.
-
+        Upload or take a photo of a checkpoint you have completed, answer the question below, and confirm.
+        When complete, <b>Cross The Line</b> will unlock.
       </p>
     </header>
 
@@ -41,6 +78,7 @@
       <label for="answer">Your Answer</label>
       <input id="answer" type="text" placeholder="Type your answer here…" />
 
+      <!-- ✅ checkbox is included + formatted clean -->
       <div class="checkline">
         <input id="confirm" type="checkbox" />
         <div>
@@ -51,7 +89,7 @@
 
       <div class="btnrow">
         <button id="crossBtn" class="btn" disabled>Cross The Line</button>
-        <button id="resetBtn" class="btn-ghost" type="button">Reset</button>
+        <button id="resetBtn" class="btn ghost" type="button">Reset</button>
       </div>
     </section>
   </main>
