@@ -145,7 +145,6 @@
     }
 
     // ======= staged payload handling =======
-    // You already used wnp_payload. We'll support it AND also fold in checkpoint keys we stored.
     function pullPayload() {
       const raw = sessionStorage.getItem("wnp_payload");
       if (!raw) return {};
@@ -156,12 +155,10 @@
     }
 
     function mergeCheckpointCarryover(payload) {
-      // from checkpoint.html drop-in we created
       const ckKey = sessionStorage.getItem("wnp_checkpoint_key") || "";
       const ckAns = sessionStorage.getItem("wnp_checkpoint_answer") || "";
       const ckOk  = sessionStorage.getItem("wnp_checkpoint_confirmed") === "true";
 
-      // keep your existing staged structure open-ended
       if (ckKey) payload.checkpoint_key = ckKey;
       if (ckAns) payload.answer = ckAns;
       if (ckOk)  payload.confirmed = true;
@@ -169,12 +166,19 @@
       return payload;
     }
 
+    // ✅ NEW: pull email from URL (?email= or ?e=) first, then payload/session/local
+    function emailFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get("email") || params.get("e") || "").trim().toLowerCase();
+    }
+
     function loadEmailCarryover() {
-      const ss = (sessionStorage.getItem("wnp_email") || "").trim();
-      const ls = (localStorage.getItem("wnp_email") || "").trim();
+      const fromUrl = emailFromUrl(); // ✅ highest priority
       const p = pullPayload();
-      const pe = (p.email || "").trim();
-      return (pe || ss || ls || "");
+      const pe = (p.email || "").trim().toLowerCase();
+      const ss = (sessionStorage.getItem("wnp_email") || "").trim().toLowerCase();
+      const ls = (localStorage.getItem("wnp_email") || "").trim().toLowerCase();
+      return (fromUrl || pe || ss || ls || "");
     }
 
     // ======= send limit (3 per browser session) =======
@@ -194,6 +198,9 @@
       if (remaining <= 0) {
         $("sendTemp").disabled = true;
         $("sendTemp").classList.add("btn-disabled");
+      } else {
+        $("sendTemp").disabled = false;
+        $("sendTemp").classList.remove("btn-disabled");
       }
     }
 
@@ -211,13 +218,34 @@
       setResult("Edit your email, then send a new temporary password.");
     };
 
+    function persistCanonicalEmail(email) {
+      const e = (email || "").trim().toLowerCase();
+      if (!e) return;
+
+      // store in storage for subsequent pages
+      sessionStorage.setItem("wnp_email", e);
+      localStorage.setItem("wnp_email", e);
+
+      // store in staged payload
+      let payload = pullPayload();
+      payload.email = e;
+      payload.mode = payload.mode || modeValue();
+      payload = mergeCheckpointCarryover(payload);
+      savePayload(payload);
+    }
+
     // ======= init =======
     (function init() {
       const carryEmail = loadEmailCarryover();
       if (carryEmail) {
         $("email").value = carryEmail;
         $("email2").value = carryEmail;
+
+        // If email arrived from URL, treat it as the carried identity, but still allow edit.
+        // We'll lock after first send.
+        persistCanonicalEmail(carryEmail);
       }
+
       updateSendLimitUI();
       setResult("Waiting…");
     })();
@@ -241,15 +269,8 @@
 
       setResult("Sending temporary password…");
 
-      // persist payload + email for later steps/pages
-      let payload = pullPayload();
-      payload.email = email;
-      payload.mode = payload.mode || modeValue(); // keep staged if already set
-      payload = mergeCheckpointCarryover(payload);
-      savePayload(payload);
-
-      sessionStorage.setItem("wnp_email", email);
-      localStorage.setItem("wnp_email", email);
+      // persist canonical email everywhere (final decision begins here)
+      persistCanonicalEmail(email);
 
       try {
         const r = await fetch(TEMP_REQUEST, {
@@ -303,6 +324,9 @@
 
       setResult("Setting password…");
 
+      // ✅ ensure canonical email is persisted at the moment of final confirmation
+      persistCanonicalEmail(email);
+
       try {
         const r = await fetch(TEMP_CONFIRM, {
           method: "POST",
@@ -324,13 +348,12 @@
         sessionStorage.removeItem("wnp_payload");
 
         // ROUTING
-        // manual -> decision pending
         if (mode === "manual") {
           window.location.href = "decision.html";
           return;
         }
 
-        // auto -> go to canonical router (member-access) which will route to oath/name/member-area
+        // auto -> canonical router
         window.location.href = "member-access.html";
       } catch (e) {
         setResult("Network error. Try again.", true);
