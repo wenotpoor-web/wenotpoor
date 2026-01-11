@@ -9,62 +9,30 @@
     :root{
       --bg:#000;
       --panel:#0b0b0b;
-      --panel2:#000;
       --text:#FFD400;
       --muted:rgba(255,212,0,.75);
       --line:rgba(255,212,0,.22);
-      --outline:rgba(255,212,0,.55); /* thicker outline color */
-      --danger:#FF2A2A;
-      --good:#16c172;
+      --outline:rgba(255,212,0,.62);
       --radius:18px;
       --font:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:var(--font);
-    }
-    .wrap{
-      max-width:860px;
-      margin:0 auto;
-      padding:22px;
-    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+    .wrap{max-width:860px;margin:0 auto;padding:22px}
     .card{
       background:linear-gradient(180deg, rgba(255,212,0,.06), rgba(0,0,0,0) 32%), var(--panel);
-      border:2px solid var(--outline);            /* ✅ thicker */
+      border:3px solid var(--outline); /* ✅ thicker */
       border-radius:var(--radius);
       padding:20px;
-      box-shadow:
-        0 0 0 1px rgba(0,0,0,.65) inset,
-        0 0 0 1px rgba(255,212,0,.12);            /* subtle extra edge */
+      box-shadow:0 0 0 1px rgba(0,0,0,.65) inset;
     }
-    h1{
-      margin:0 0 10px;
-      font-size:24px;
-      letter-spacing:.3px;
-    }
-    p{
-      margin:8px 0;
-      color:var(--muted);
-      line-height:1.35;
-    }
-    label{
-      display:block;
-      margin:16px 0 8px;
-      color:var(--text);
-      font-weight:800;
-      letter-spacing:.2px;
-    }
-    .fine{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:8px;
-    }
+    h1{margin:0 0 10px;font-size:24px;letter-spacing:.3px}
+    p{margin:8px 0;color:var(--muted);line-height:1.35}
+    label{display:block;margin:16px 0 8px;color:var(--text);font-weight:800;letter-spacing:.2px}
+    .fine{font-size:12px;color:var(--muted);margin-top:8px}
 
-    input[type="email"], input[type="text"], textarea{
+    input[type="email"], input[type="text"]{
       width:100%;
       padding:13px 14px;
       border-radius:14px;
@@ -74,8 +42,13 @@
       outline:none;
     }
     input[type="email"]::placeholder,
-    input[type="text"]::placeholder,
-    textarea::placeholder{ color: rgba(255,212,0,.45); }
+    input[type="text"]::placeholder{ color: rgba(255,212,0,.45); }
+
+    input[type="email"][disabled]{
+      opacity:.9;
+      background:rgba(0,0,0,.7);
+      cursor:not-allowed;
+    }
 
     input[type="file"]{
       width:100%;
@@ -98,52 +71,23 @@
     }
 
     .checkline{
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      margin-top:16px;
-      padding:14px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#000;
+      display:flex;gap:12px;align-items:flex-start;
+      margin-top:16px;padding:14px;border:1px solid var(--line);
+      border-radius:14px;background:#000;
     }
     .checkline input[type="checkbox"]{
-      width:18px;height:18px;
-      margin-top:3px;
-      accent-color: var(--text);
+      width:18px;height:18px;margin-top:3px;accent-color:var(--text);
     }
-    .checkTitle{
-      font-weight:900;
-      color:var(--text);
-    }
+    .checkTitle{font-weight:900;color:var(--text)}
 
-    .btnrow{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-top:18px;
-    }
+    .btnrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
     button{
-      appearance:none;
-      border:0;
-      border-radius:16px;
-      padding:12px 16px;
-      font-weight:900;
-      cursor:pointer;
+      appearance:none;border:0;border-radius:16px;
+      padding:12px 16px;font-weight:900;cursor:pointer;
     }
-    .btn{
-      background:var(--text);
-      color:#000;
-    }
-    .btn:disabled{
-      opacity:.35;
-      cursor:not-allowed;
-    }
-    .btn-ghost{
-      background:transparent;
-      color:var(--text);
-      border:1px solid var(--line);
-    }
+    .btn{background:var(--text);color:#000}
+    .btn:disabled{opacity:.35;cursor:not-allowed}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
   </style>
 </head>
 
@@ -155,7 +99,7 @@
 
       <label for="email">Email</label>
       <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-      <div class="fine">Use the same email you used to register your copy.</div>
+      <div class="fine">This is pulled from your registration.</div>
 
       <label for="file">Upload Photo (Proof)</label>
       <input id="file" type="file" accept="image/*" />
@@ -180,8 +124,6 @@
         <button id="crossBtn" class="btn" disabled>Cross The Line</button>
         <button id="resetBtn" class="btn-ghost" type="button">Reset</button>
       </div>
-
-      <!-- ✅ Status removed (per your request) -->
     </div>
   </div>
 
@@ -197,37 +139,41 @@
   const resetBtn = $("resetBtn");
   const questionTextEl = $("questionText");
 
-  // Worker expects checkpoint_id — keep silently.
   const CHECKPOINT_ID = "checkpoint_1";
   const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
 
   let uploadedKeys = [];
   let lastUploadOk = false;
 
-  // ✅ Pull email forward so user doesn’t retype
-  // Accept either ?email=... or ?e=...
   function getEmailFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return (params.get("email") || params.get("e") || "").trim();
   }
 
-  function loadRememberedEmail() {
+  function setEmailFromRegister() {
+    // ✅ Primary: pull from register -> checkpoint via querystring
     const fromUrl = getEmailFromUrl();
-    const fromStorage = (localStorage.getItem("wnp_email") || "").trim();
-    const value = fromUrl || fromStorage;
-    if (value) emailEl.value = value;
-  }
 
-  function rememberEmail(value) {
-    const v = (value || "").trim();
-    if (v) localStorage.setItem("wnp_email", v);
+    // ✅ Fallback only if someone loads checkpoint directly (not from register)
+    const fromStorage = (localStorage.getItem("wnp_email") || "").trim();
+
+    const email = fromUrl || fromStorage;
+
+    if (email) {
+      emailEl.value = email;
+      emailEl.disabled = true;               // ✅ user shouldn’t re-enter it
+      localStorage.setItem("wnp_email", email); // keep it consistent for later pages
+    } else {
+      emailEl.disabled = false;              // if no email found, allow entry
+    }
   }
 
   function canEnable() {
+    const email = (emailEl.value || "").trim();
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
-    return hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
+    return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
   function refreshButton() {
@@ -239,10 +185,7 @@
     lastUploadOk = false;
 
     const file = fileEl.files?.[0];
-    if (!file) {
-      refreshButton();
-      return;
-    }
+    if (!file) { refreshButton(); return; }
 
     const fd = new FormData();
     fd.append("file", file);
@@ -258,7 +201,6 @@
     try { data = JSON.parse(text); } catch {}
 
     if (!res.ok) {
-      // no status UI; fail quietly but keep button disabled
       uploadedKeys = [];
       lastUploadOk = false;
       refreshButton();
@@ -271,7 +213,7 @@
       if (typeof data.key === "string") keys.push(data.key);
     }
 
-    if (keys.length === 0) {
+    if (!keys.length) {
       uploadedKeys = [];
       lastUploadOk = false;
       refreshButton();
@@ -287,13 +229,7 @@
     const email = (emailEl.value || "").trim();
     const answer = (answerEl.value || "").trim();
 
-    if (!email) return;
-    if (!answer) return;
-    if (!confirmEl.checked) return;
-    if (!uploadedKeys.length) return;
-
-    // Remember email for next pages
-    rememberEmail(email);
+    if (!email || !answer || !confirmEl.checked || !uploadedKeys.length) return;
 
     const res = await fetch(`/api/auto-checkpoint/submit`, {
       method: "POST",
@@ -310,9 +246,8 @@
 
     if (!res.ok) return;
 
-    // ✅ Route to email-setup with email prefilled
-    const next = `email-setup.html?email=${encodeURIComponent(email)}`;
-    window.location.href = next;
+    // ✅ carry email forward to email-setup
+    window.location.href = `email-setup.html?email=${encodeURIComponent(email)}`;
   }
 
   // Events
@@ -328,8 +263,8 @@
 
   ["input","change","keyup"].forEach(evt => {
     answerEl.addEventListener(evt, refreshButton);
-    emailEl.addEventListener(evt, () => { rememberEmail(emailEl.value); refreshButton(); });
     confirmEl.addEventListener(evt, refreshButton);
+    emailEl.addEventListener(evt, refreshButton);
   });
 
   crossBtn.addEventListener("click", async (e) => {
@@ -338,7 +273,7 @@
   });
 
   resetBtn.addEventListener("click", () => {
-    // keep email (since you want it carried forward)
+    // Keep email (pulled from register)
     fileEl.value = "";
     answerEl.value = "";
     confirmEl.checked = false;
@@ -348,7 +283,7 @@
   });
 
   // init
-  loadRememberedEmail();
+  setEmailFromRegister();
   refreshButton();
 })();
 </script>
