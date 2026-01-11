@@ -6,7 +6,7 @@
   <title>Show Your Work · WE NOT POOR</title>
   <link rel="stylesheet" href="style.css?v=wnp16" />
 
-  <!-- ✅ Small, safe overrides to "clean up formatting" without touching style.css -->
+  <!-- ✅ Focused overrides: spacing, separation, and a correct checkbox -->
   <style>
     /* Center hero like your other pages */
     .hero.hero-center{ text-align:center; }
@@ -18,27 +18,51 @@
       margin-right:auto;
     }
 
-    /* Ensure checkbox block looks clean even if style.css changed */
+    /* Section spacing (prevents "everything runs together") */
+    .field-block{ margin-top: 18px; }
+    .fine{ margin-top: 10px; line-height: 1.4; }
+
+    /* Add a visual divider between Upload instructions and Question */
+    .divider{
+      height:1px;
+      background: rgba(255,212,0,.22);
+      margin: 18px 0;
+      border-radius: 999px;
+    }
+
+    /* Label spacing consistency */
+    label{ margin-top: 18px; }
+
+    /* Question block breathing room */
+    .questionBox{ margin-top: 10px; margin-bottom: 8px; }
+
+    /* ✅ Correct checkbox row (no giant ring / no weird alignment) */
     .checkline{
       display:flex;
       gap:12px;
       align-items:flex-start;
       padding:14px;
       border-radius:16px;
+      margin-top: 18px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,212,0,.22);
     }
     .checkline input[type="checkbox"]{
-      width:18px;height:18px;
-      margin-top:3px;
-      flex:0 0 auto;
+      appearance:auto;            /* ✅ let browser render a real checkbox */
+      width:18px;
+      height:18px;
+      margin: 2px 0 0 0;
+      flex: 0 0 auto;
+      accent-color: #FFD400;      /* ✅ yellow tick */
     }
     .checkTitle{ font-weight:900; }
 
-    /* Make sure buttons don't run weird on small screens */
+    /* Buttons row spacing */
     .btnrow{
       display:flex;
       gap:12px;
       flex-wrap:wrap;
-      margin-top:16px;
+      margin-top:18px;
     }
   </style>
 </head>
@@ -46,7 +70,6 @@
 <body class="wnp">
   <main class="wrap">
 
-    <!-- ✅ centered hero + cleaned text formatting -->
     <header class="hero hero-center">
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
@@ -61,24 +84,34 @@
     </header>
 
     <section class="card">
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-
-      <label for="file">Upload Photo (Proof)</label>
-      <input id="file" type="file" accept="image/*" />
-      <div class="fine">
-        Please upload a clear photo of <b>your physical book</b> showing the checkpoint page (the printed checkpoint inside your copy).
+      <div class="field-block">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
       </div>
 
-      <label>Question</label>
-      <div id="questionText" class="questionBox">
-        What is the one belief you are refusing to let die — even though it’s costing you your future?
+      <div class="field-block">
+        <label for="file">Upload Photo (Proof)</label>
+        <input id="file" type="file" accept="image/*" />
+        <div class="fine">
+          Please upload a clear photo of <b>your physical book</b> showing the checkpoint page
+          (the printed checkpoint inside your copy).
+        </div>
       </div>
 
-      <label for="answer">Your Answer</label>
-      <input id="answer" type="text" placeholder="Type your answer here…" />
+      <div class="divider" aria-hidden="true"></div>
 
-      <!-- ✅ checkbox is included + formatted clean -->
+      <div class="field-block">
+        <label>Question</label>
+        <div id="questionText" class="questionBox">
+          What is the one belief you are refusing to let die — even though it’s costing you your future?
+        </div>
+      </div>
+
+      <div class="field-block">
+        <label for="answer">Your Answer</label>
+        <input id="answer" type="text" placeholder="Type your answer here…" />
+      </div>
+
       <div class="checkline">
         <input id="confirm" type="checkbox" />
         <div>
