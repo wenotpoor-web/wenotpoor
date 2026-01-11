@@ -28,13 +28,12 @@
 
     label{ margin-top: 18px; }
 
-    /* ✅ FIX: remove extra space above Email */
+    /* tighten space above Email */
     .card .field-block:first-child{ margin-top: 0 !important; }
     .card .field-block:first-child label{ margin-top: 0 !important; }
 
     .questionBox{ margin-top: 10px; margin-bottom: 8px; }
 
-    /* ✅ Make "Question" stand out more */
     .questionLabel{
       display:flex;
       align-items:center;
@@ -89,7 +88,6 @@
       pointer-events:none;
       filter: grayscale(15%);
     }
-
     #crossBtn.ready{
       background:#FF2A2A !important;
       color:#FFFFFF !important;
@@ -97,7 +95,6 @@
     }
     #crossBtn.ready:hover{ filter: brightness(1.05); }
 
-    /* Tiny debug line (only shows on error) */
     .mini-debug{
       display:none;
       margin-top:10px;
@@ -202,12 +199,12 @@
     debugEl.classList.add("show");
   }
 
-  // Carry email: url -> session -> local
+  function normalizeEmail(v) { return (v || "").trim().toLowerCase(); }
+
   function getEmailFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return (params.get("email") || params.get("e") || "").trim();
   }
-  function normalizeEmail(v) { return (v || "").trim().toLowerCase(); }
   function loadCarryEmail() {
     const fromUrl = normalizeEmail(getEmailFromUrl());
     const fromSession = normalizeEmail(sessionStorage.getItem("wnp_email") || "");
@@ -239,7 +236,6 @@
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
-
     return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
   }
 
@@ -250,43 +246,24 @@
     crossBtn.classList.toggle("ready", ok);
   }
 
-  // ✅ Robust key extraction for MANY Worker response shapes
-  function extractKeysFromResponse(data, rawText) {
+  function extractKeys(data, rawText) {
     const keys = [];
-
-    // If JSON object
     if (data && typeof data === "object") {
       const candidates = [
-        data.keys,
-        data.key,
-        data.image_keys,
-        data.image_key,
-        data.r2_keys,
-        data.r2_key,
-        data.upload_keys,
-        data.upload_key,
-        data.file_keys,
-        data.file_key,
+        data.keys, data.key,
+        data.image_keys, data.image_key,
         data.result && data.result.keys,
-        data.result && data.result.key,
+        data.result && data.result.key
       ];
-
       for (const c of candidates) {
         if (Array.isArray(c)) keys.push(...c.filter(Boolean));
         else if (typeof c === "string" && c.trim()) keys.push(c.trim());
       }
     }
-
-    // If nothing found, treat raw text as a single key (some endpoints return plain text)
-    if (keys.length === 0 && typeof rawText === "string") {
+    if (!keys.length && typeof rawText === "string") {
       const t = rawText.trim();
-      // Avoid treating JSON text as a key
-      if (t && !(t.startsWith("{") && t.endsWith("}")) && !(t.startsWith("[") && t.endsWith("]"))) {
-        keys.push(t);
-      }
+      if (t && !(t.startsWith("{") && t.endsWith("}"))) keys.push(t);
     }
-
-    // Deduplicate
     return [...new Set(keys)];
   }
 
@@ -300,10 +277,18 @@
     if (!file) return;
 
     const fd = new FormData();
-    fd.append("file", file); // if your Worker expects a different field name, tell me and I'll match it
+
+    // ✅ Send kind BOTH ways (Worker can read either)
+    fd.append("kind", "checkpoint");
+
+    // ✅ Send file under multiple common names (Worker will use whichever it expects)
+    fd.append("file", file, file.name);
+    fd.append("upload", file, file.name);
+    fd.append("image", file, file.name);
 
     let res, rawText, data = null;
     try {
+      // ✅ Also keep kind in querystring
       res = await fetch(`/api/uploads?kind=checkpoint`, {
         method: "POST",
         body: fd,
@@ -311,40 +296,25 @@
       });
       rawText = await res.text();
       try { data = JSON.parse(rawText); } catch {}
-    } catch (e) {
-      showDebug("Upload error: network/request failed.");
-      uploadedKeys = [];
-      lastUploadOk = false;
-      setCrossState();
+    } catch {
+      showDebug("Upload error: request failed.");
       return;
     }
 
     if (!res.ok) {
       showDebug(`Upload failed (${res.status}).\n${rawText || ""}`);
-      uploadedKeys = [];
-      lastUploadOk = false;
-      setCrossState();
       return;
     }
 
-    const keys = extractKeysFromResponse(data, rawText);
-
+    const keys = extractKeys(data, rawText);
     if (!keys.length) {
-      // show a helpful hint
-      showDebug(
-        "Upload succeeded but returned no key.\n" +
-        "This means /api/uploads is responding in a format the page didn’t recognize.\n\n" +
-        "Response was:\n" + (rawText || "[empty]")
-      );
-      uploadedKeys = [];
-      lastUploadOk = false;
-      setCrossState();
+      showDebug("Upload succeeded but no key returned.\nResponse:\n" + (rawText || "[empty]"));
       return;
     }
 
     uploadedKeys = keys;
     lastUploadOk = true;
-    showDebug(""); // keep clean on success
+    showDebug("");
     setCrossState();
   }
 
@@ -368,7 +338,6 @@
     });
 
     if (!res.ok) {
-      // If submit fails, show minimal debug
       const t = await res.text().catch(() => "");
       showDebug(`Submit failed (${res.status}).\n${t || ""}`);
       return;
@@ -377,16 +346,12 @@
     window.location.href = `email-setup.html?email=${encodeURIComponent(email)}`;
   }
 
-  // Events
   fileEl.addEventListener("change", async () => {
     uploadedKeys = [];
     lastUploadOk = false;
     showDebug("");
     setCrossState();
-
-    if (fileEl.files?.length) {
-      await uploadCheckpointImage();
-    }
+    if (fileEl.files?.length) await uploadCheckpointImage();
   });
 
   ["input","change","keyup"].forEach(evt => {
@@ -409,7 +374,6 @@
     setCrossState();
   });
 
-  // init
   applyCarryEmail();
   setCrossState();
 })();
