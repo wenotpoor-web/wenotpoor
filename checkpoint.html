@@ -28,7 +28,6 @@
 
     label{ margin-top: 18px; }
 
-    /* tighten space above Email */
     .card .field-block:first-child{ margin-top: 0 !important; }
     .card .field-block:first-child label{ margin-top: 0 !important; }
 
@@ -190,6 +189,7 @@
   const QUESTION_TEXT = (questionTextEl?.textContent || "").trim();
 
   let uploadedKeys = [];
+  let checkpointKey = "";   // ✅ singular key required by Worker
   let lastUploadOk = false;
 
   function showDebug(msg="") {
@@ -236,7 +236,9 @@
     const hasFile = !!(fileEl.files && fileEl.files.length > 0);
     const hasAnswer = (answerEl.value || "").trim().length > 0;
     const hasCheck = !!confirmEl.checked;
-    return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && uploadedKeys.length > 0;
+
+    // ✅ Must have the singular checkpointKey too
+    return !!email && hasFile && hasAnswer && hasCheck && lastUploadOk && !!checkpointKey;
   }
 
   function setCrossState() {
@@ -252,8 +254,10 @@
       const candidates = [
         data.keys, data.key,
         data.image_keys, data.image_key,
+        data.checkpoint_keys, data.checkpoint_key,
         data.result && data.result.keys,
-        data.result && data.result.key
+        data.result && data.result.key,
+        data.result && data.result.image_key
       ];
       for (const c of candidates) {
         if (Array.isArray(c)) keys.push(...c.filter(Boolean));
@@ -269,6 +273,7 @@
 
   async function uploadCheckpointImage() {
     uploadedKeys = [];
+    checkpointKey = "";
     lastUploadOk = false;
     showDebug("");
     setCrossState();
@@ -277,18 +282,13 @@
     if (!file) return;
 
     const fd = new FormData();
-
-    // ✅ Send kind BOTH ways (Worker can read either)
     fd.append("kind", "checkpoint");
-
-    // ✅ Send file under multiple common names (Worker will use whichever it expects)
     fd.append("file", file, file.name);
     fd.append("upload", file, file.name);
     fd.append("image", file, file.name);
 
     let res, rawText, data = null;
     try {
-      // ✅ Also keep kind in querystring
       res = await fetch(`/api/uploads?kind=checkpoint`, {
         method: "POST",
         body: fd,
@@ -313,8 +313,13 @@
     }
 
     uploadedKeys = keys;
+    checkpointKey = keys[0];                // ✅ Worker-required field
     lastUploadOk = true;
-    showDebug("");
+
+    // Optional carryover / debugging
+    sessionStorage.setItem("wnp_checkpoint_key", checkpointKey);
+
+    showDebug(""); // keep UI clean
     setCrossState();
   }
 
@@ -324,17 +329,25 @@
     const email = normalizeEmail(emailEl.value);
     const answer = (answerEl.value || "").trim();
 
+    const payload = {
+      email,
+      checkpoint_id: CHECKPOINT_ID,
+
+      // ✅ REQUIRED by your Worker:
+      checkpoint_key: checkpointKey,
+
+      // ✅ Keep also sending the array for future compatibility:
+      image_keys: uploadedKeys,
+
+      answer,
+      question: QUESTION_TEXT
+    };
+
     const res = await fetch(`/api/auto-checkpoint/submit`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       credentials: "include",
-      body: JSON.stringify({
-        email,
-        checkpoint_id: CHECKPOINT_ID,
-        image_keys: uploadedKeys,
-        answer,
-        question: QUESTION_TEXT
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -348,6 +361,7 @@
 
   fileEl.addEventListener("change", async () => {
     uploadedKeys = [];
+    checkpointKey = "";
     lastUploadOk = false;
     showDebug("");
     setCrossState();
@@ -369,6 +383,7 @@
     answerEl.value = "";
     confirmEl.checked = false;
     uploadedKeys = [];
+    checkpointKey = "";
     lastUploadOk = false;
     showDebug("");
     setCrossState();
