@@ -142,15 +142,27 @@
   }
 
   // ✅ Persist staged payload for downstream pages (checkpoint/email-setup)
+  //    This is the "source of truth" for AUTO path. Email setup should NEVER guess.
   function stageAutoPayload({ email, code, data }) {
     const payload = {
       mode: "auto",
+      path_type: "auto",             // explicit (future-proof)
       email,
       code,
       member_id: data?.member_id || null,
-      // Helpful for debugging / future routing without re-calling redeem
+
+      // Progress flags (lets pages route without re-calling redeem)
+      status: data?.status || null,
+      needs_password: !!data?.needs_password,
+      needs_oath: !!data?.needs_oath,
+      needs_first_name: !!data?.needs_first_name,
+      next_step: data?.next_step || null,
+      already_registered: !!data?.already_registered,
+
+      // helpful for debug
       redeem_response: data || null
     };
+
     sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
     sessionStorage.setItem("wnp_email", email);
     localStorage.setItem("wnp_email", email);
@@ -159,24 +171,27 @@
   // ✅ Authoritative router based on Worker progress fields
   function routeAfterRedeem(data, email, code) {
     const status = String(data?.status || "").toLowerCase();
+
     if (status === "denied") return "denied.html";
     if (status === "pending") return "decision.html";
 
     const needsPassword = !!data?.needs_password;
 
-    // If already registered, do NOT send them back through checkpoint again.
+    // ✅ If already registered, do NOT send them back through checkpoint again.
     if (data?.already_registered) {
-      // If they still need password setup, go to email setup
-      if (needsPassword) return `email-setup.html?email=${encodeURIComponent(email)}`;
+      // If they still need password setup, go to email setup (force mode=auto)
+      if (needsPassword) {
+        return `email-setup.html?email=${encodeURIComponent(email)}&mode=auto`;
+      }
 
-      // Otherwise send them to login/canonical router
-      // (member-access.html is your login + routes forward via /api/me)
+      // Otherwise send them to the canonical "Already a member" area.
+      // (Your member-access page should route forward via /api/me)
       return `member-access.html?email=${encodeURIComponent(email)}`;
     }
 
-    // New redemption: go to auto checkpoint
-    // (checkpoint collects upload + answer + checkbox before password setup)
-    return `checkpoint.html?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`;
+    // ✅ New redemption: go to auto checkpoint
+    // Include mode=auto so even if sessionStorage is lost, downstream pages know.
+    return `checkpoint.html?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}&mode=auto`;
   }
 
   function setBusy(isBusy) {
@@ -214,7 +229,7 @@
         return;
       }
 
-      // ✅ Stage payload for the next pages (auto path)
+      // ✅ HARD LOCK: This path is ALWAYS auto. No guessing later.
       stageAutoPayload({ email, code, data });
 
       // ✅ Route based on actual state/progress returned by Worker
