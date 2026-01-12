@@ -23,9 +23,7 @@
       </div>
 
       <h1>REGISTER YOUR COPY</h1>
-      <p class="sub">
-        This is the point where commitment replaces curiosity.
-      </p>
+      <p class="sub">This is the point where commitment replaces curiosity.</p>
     </header>
 
     <section class="card register-card">
@@ -74,15 +72,12 @@
       margin-right: auto;
       padding: 22px 20px 24px;
     }
-
     .book-code-field{
       max-width: 420px;
       margin-left: auto;
       margin-right: auto;
     }
-
     .book-code-field input{ width:100%; }
-
     .actions-stack{
       display:flex;
       flex-direction:column;
@@ -90,17 +85,14 @@
       margin-top:16px;
       align-items:center;
     }
-
     .center-note{
       text-align:center;
       margin-top:14px;
     }
-
     @media (max-width: 520px){
       .register-card{ max-width: 100%; }
       .book-code-field{ max-width: 100%; }
     }
-
     .brand-wrap{ display:inline-flex; flex-direction:column; gap:4px; }
     .brand-offset{ align-items:flex-start; }
     .brand-accent{
@@ -114,8 +106,18 @@
   </style>
 
 <script>
-  // ✅ Same-origin (Pages -> Worker Functions) endpoint
-  const REDEEM_ENDPOINT = "/api/book-codes/redeem";
+  // ============================================================
+  // ✅ API BASE (Pages dev vs custom domain)
+  // - If you're on pages.dev, call the production domain
+  // - If you're already on wenotpoor.com/www, use same origin
+  // ============================================================
+  const HOST = (window.location.hostname || "").toLowerCase();
+  const API_BASE =
+    HOST.endsWith(".pages.dev")
+      ? "https://wenotpoor.com"
+      : window.location.origin;
+
+  const REDEEM_ENDPOINT = `${API_BASE}/api/book-codes/redeem`;
 
   const $ = (id) => document.getElementById(id);
 
@@ -141,25 +143,19 @@
     return /^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code);
   }
 
-  // ✅ Persist staged payload for downstream pages (checkpoint/email-setup)
-  //    This is the "source of truth" for AUTO path. Email setup should NEVER guess.
   function stageAutoPayload({ email, code, data }) {
     const payload = {
       mode: "auto",
-      path_type: "auto",             // explicit (future-proof)
+      path_type: "auto",
       email,
       code,
       member_id: data?.member_id || null,
-
-      // Progress flags (lets pages route without re-calling redeem)
       status: data?.status || null,
       needs_password: !!data?.needs_password,
       needs_oath: !!data?.needs_oath,
       needs_first_name: !!data?.needs_first_name,
       next_step: data?.next_step || null,
       already_registered: !!data?.already_registered,
-
-      // helpful for debug
       redeem_response: data || null
     };
 
@@ -168,7 +164,6 @@
     localStorage.setItem("wnp_email", email);
   }
 
-  // ✅ Authoritative router based on Worker progress fields
   function routeAfterRedeem(data, email, code) {
     const status = String(data?.status || "").toLowerCase();
 
@@ -177,20 +172,13 @@
 
     const needsPassword = !!data?.needs_password;
 
-    // ✅ If already registered, do NOT send them back through checkpoint again.
     if (data?.already_registered) {
-      // If they still need password setup, go to email setup (force mode=auto)
       if (needsPassword) {
         return `email-setup.html?email=${encodeURIComponent(email)}&mode=auto`;
       }
-
-      // Otherwise send them to the canonical "Already a member" area.
-      // (Your member-access page should route forward via /api/me)
       return `member-access.html?email=${encodeURIComponent(email)}`;
     }
 
-    // ✅ New redemption: go to auto checkpoint
-    // Include mode=auto so even if sessionStorage is lost, downstream pages know.
     return `checkpoint.html?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}&mode=auto`;
   }
 
@@ -198,6 +186,16 @@
     const btn = $("continueBtn");
     btn.disabled = isBusy;
     btn.textContent = isBusy ? "VERIFYING..." : "CONTINUE";
+  }
+
+  async function readResponseSafely(resp) {
+    const ct = (resp.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("application/json")) {
+      return await resp.json().catch(() => ({}));
+    }
+    // If it’s HTML/text (common when hitting Pages instead of Worker), read it
+    const text = await resp.text().catch(() => "");
+    return { error: text ? text.slice(0, 180) : null, _non_json: true };
   }
 
   async function redeem() {
@@ -214,25 +212,26 @@
     setBusy(true);
 
     try {
-      const r = await fetch(REDEEM_ENDPOINT, {
+      const resp = await fetch(REDEEM_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ code, email })
       });
 
-      const data = await r.json().catch(() => ({}));
+      const data = await readResponseSafely(resp);
 
-      if (!r.ok) {
-        setMsg(data?.error || "Could not verify code.");
+      if (!resp.ok) {
+        // Show real reason (this will immediately tell us what’s wrong)
+        const msg = data?.error || `Request failed (${resp.status}).`;
+        const hint = data?._non_json ? " (Non-JSON response: likely wrong endpoint/routing)" : "";
+        setMsg(`${msg}${hint}`);
         setBusy(false);
         return;
       }
 
-      // ✅ HARD LOCK: This path is ALWAYS auto. No guessing later.
       stageAutoPayload({ email, code, data });
 
-      // ✅ Route based on actual state/progress returned by Worker
       const next = routeAfterRedeem(data, email, code);
       window.location.href = next;
 
@@ -242,7 +241,6 @@
     }
   }
 
-  // Prefill from query params (optional but helpful)
   (function initPrefill() {
     try {
       const url = new URL(window.location.href);
@@ -252,7 +250,6 @@
       if (qCode) $("code").value = qCode;
       if (qEmail) $("email").value = qEmail;
 
-      // If no email in URL, use prior stored
       if (!qEmail) {
         const carry = (sessionStorage.getItem("wnp_email") || localStorage.getItem("wnp_email") || "").trim();
         if (carry) $("email").value = normalizeEmail(carry);
