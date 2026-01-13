@@ -8,6 +8,7 @@
 </head>
 
 <body class="wnp">
+
   <a href="index.html" class="top-login"><span>Back to Home</span></a>
 
   <main class="wrap">
@@ -37,7 +38,7 @@
         <a class="btn ghost" href="member.html">BACK</a>
       </div>
 
-      <p id="msg" class="note center-note" style="min-height:22px;"></p>
+      <p id="msg" class="note center-note" style="min-height:18px;"></p>
       <p class="note center-note">One copy. One entry. Not transferable.</p>
     </section>
   </main>
@@ -55,13 +56,15 @@
   </style>
 
 <script>
-  // Same-origin first
-  const SAME_ORIGIN_REDEEM = "/api/book-codes/redeem";
-
-  // Fallback Worker host (fill this in if you want instant bypass of route issues)
-  // Example: "https://wenotpoor-api.wenotpoor.workers.dev"
-  const WORKER_HOST = "https://wenotpoor-api.wenotpoor.workers.dev";
-  const WORKER_REDEEM = `${WORKER_HOST}/api/book-codes/redeem`;
+  // ============================
+  // API BASE FIX (Preview vs Prod)
+  // ============================
+  // If you're testing on *.pages.dev preview URLs, call the production domain for /api/*
+  // so you don't accidentally hit the preview site (which can return HTML).
+  const host = window.location.hostname.toLowerCase();
+  const IS_PAGES_PREVIEW = host.endsWith("pages.dev");
+  const API_BASE = IS_PAGES_PREVIEW ? "https://wenotpoor.com" : ""; // same-origin on prod
+  const REDEEM_ENDPOINT = `${API_BASE}/api/book-codes/redeem`;
 
   const $ = (id) => document.getElementById(id);
 
@@ -76,6 +79,7 @@
   function isValidEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
   function isValidBookCode(code){ return /^WNP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code); }
 
+  // ✅ Persist staged payload ONLY after a successful redeem.
   function stageAutoPayload({ email, code, data }) {
     const payload = {
       mode: "auto",
@@ -88,23 +92,28 @@
       needs_oath: !!data?.needs_oath,
       needs_first_name: !!data?.needs_first_name,
       next_step: data?.next_step || null,
-      already_registered: !!data?.already_registered
+      already_registered: !!data?.already_registered,
+      redeem_response: data || null
     };
+
     sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
-    // Save email ONLY after successful redeem
     sessionStorage.setItem("wnp_email", email);
     localStorage.setItem("wnp_email", email);
   }
 
   function routeAfterRedeem(data, email, code) {
     const status = String(data?.status || "").toLowerCase();
+
     if (status === "denied") return "denied.html";
     if (status === "pending") return "decision.html";
 
+    // If already registered, do NOT re-run checkpoint
     if (data?.already_registered) {
       if (data?.needs_password) return `email-setup.html?email=${encodeURIComponent(email)}&mode=auto`;
       return `member-access.html?email=${encodeURIComponent(email)}`;
     }
+
+    // New redeem -> checkpoint
     return `checkpoint.html?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}&mode=auto`;
   }
 
@@ -114,23 +123,13 @@
     btn.textContent = isBusy ? "VERIFYING..." : "CONTINUE";
   }
 
-  async function postRedeem(endpoint, code, email) {
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ code, email })
-    });
-
+  async function readJsonOrText(resp) {
     const ct = (resp.headers.get("content-type") || "").toLowerCase();
     if (ct.includes("application/json")) {
-      const data = await resp.json().catch(() => ({}));
-      return { resp, data, isJson: true };
+      return { kind: "json", data: await resp.json().catch(() => ({})) };
     }
-
-    // Non-JSON = almost always Pages HTML
     const text = await resp.text().catch(() => "");
-    return { resp, data: { error: text.slice(0, 240) }, isJson: false };
+    return { kind: "text", data: text };
   }
 
   async function redeem() {
@@ -147,29 +146,40 @@
     setBusy(true);
 
     try {
-      // 1) Try same-origin
-      let { resp, data, isJson } = await postRedeem(SAME_ORIGIN_REDEEM, code, email);
+      const resp = await fetch(REDEEM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ code, email })
+      });
 
-      // 2) If it returns HTML, retry against Worker host
-      if (!isJson) {
-        ({ resp, data, isJson } = await postRedeem(WORKER_REDEEM, code, email));
-        if (!isJson) {
-          setMsg("API routing error: /api returned HTML instead of JSON. Your domain route is not hitting the Worker.");
-          setBusy(false);
-          return;
-        }
-      }
+      const parsed = await readJsonOrText(resp);
 
-      if (!resp.ok) {
-        setMsg(data?.error || `Could not verify code. (${resp.status})`);
+      // If API returned HTML/text, show a clean routing message (instead of dumping <!DOCTYPE...>)
+      if (parsed.kind === "text") {
+        const previewHint = IS_PAGES_PREVIEW
+          ? "You’re on a pages.dev preview URL. This page will call https://wenotpoor.com for /api/* now."
+          : "Confirm your Worker route covers wenotpoor.com/api/*.";
+        const snippet = String(parsed.data || "").replace(/\s+/g, " ").slice(0, 140);
+        setMsg(`API returned non-JSON (HTTP ${resp.status}). ${previewHint} Snippet: ${snippet}`, true);
         setBusy(false);
         return;
       }
 
+      const data = parsed.data || {};
+
+      if (!resp.ok) {
+        // Your “one email per membership” rule should surface here from the Worker.
+        setMsg(data?.error || `Could not verify code. (HTTP ${resp.status})`);
+        setBusy(false);
+        return;
+      }
+
+      // ✅ Save email ONLY after success
       stageAutoPayload({ email, code, data });
       window.location.href = routeAfterRedeem(data, email, code);
 
-    } catch (_) {
+    } catch (e) {
       setMsg("Network error. Try again.");
       setBusy(false);
     }
@@ -180,9 +190,11 @@
       const url = new URL(window.location.href);
       const qEmail = normalizeEmail(url.searchParams.get("email") || "");
       const qCode = normalizeCode(url.searchParams.get("code") || "");
-      if (qCode) $("code").value = qCode;
-      if (qEmail) $("email").value = qEmail;
 
+      if (qCode) $("code").value = qCode;
+
+      // Carry forward ONLY from storage (previous successful redeem)
+      if (qEmail) $("email").value = qEmail;
       if (!qEmail) {
         const carry = (sessionStorage.getItem("wnp_email") || localStorage.getItem("wnp_email") || "").trim();
         if (carry) $("email").value = normalizeEmail(carry);
