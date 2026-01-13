@@ -8,7 +8,6 @@
 </head>
 
 <body class="wnp">
-
   <a href="index.html" class="top-login"><span>Back to Home</span></a>
 
   <main class="wrap">
@@ -38,7 +37,7 @@
         <a class="btn ghost" href="member.html">BACK</a>
       </div>
 
-      <p id="msg" class="note center-note" style="min-height:18px;"></p>
+      <p id="msg" class="note center-note" style="min-height:22px;"></p>
       <p class="note center-note">One copy. One entry. Not transferable.</p>
     </section>
   </main>
@@ -56,29 +55,13 @@
   </style>
 
 <script>
-  // ------------------------------------------------------------
-  // API BASE:
-  // - On wenotpoor.com / www.wenotpoor.com => use same-origin /api
-  // - On pages.dev (or anything else)      => call https://wenotpoor.com/api
-  // This prevents accidental Pages HTML responses.
-  // ------------------------------------------------------------
-  function getApiBase() {
-    const host = (window.location.hostname || "").toLowerCase();
+  // Same-origin first
+  const SAME_ORIGIN_REDEEM = "/api/book-codes/redeem";
 
-    // optional override for debugging:
-    // register.html?api=https://wenotpoor.com
-    try{
-      const url = new URL(window.location.href);
-      const override = url.searchParams.get("api");
-      if (override) return String(override).replace(/\/+$/,"");
-    }catch(_){}
-
-    if (host === "wenotpoor.com" || host === "www.wenotpoor.com") return "";
-    return "https://wenotpoor.com";
-  }
-
-  const API_BASE = getApiBase();
-  const REDEEM_ENDPOINT = API_BASE + "/api/book-codes/redeem";
+  // Fallback Worker host (fill this in if you want instant bypass of route issues)
+  // Example: "https://wenotpoor-api.wenotpoor.workers.dev"
+  const WORKER_HOST = "https://wenotpoor-api.wenotpoor.workers.dev";
+  const WORKER_REDEEM = `${WORKER_HOST}/api/book-codes/redeem`;
 
   const $ = (id) => document.getElementById(id);
 
@@ -105,13 +88,11 @@
       needs_oath: !!data?.needs_oath,
       needs_first_name: !!data?.needs_first_name,
       next_step: data?.next_step || null,
-      already_registered: !!data?.already_registered,
-      redeem_response: data || null
+      already_registered: !!data?.already_registered
     };
     sessionStorage.setItem("wnp_payload", JSON.stringify(payload));
+    // Save email ONLY after successful redeem
     sessionStorage.setItem("wnp_email", email);
-
-    // ✅ Only persist email after a SUCCESSFUL redemption
     localStorage.setItem("wnp_email", email);
   }
 
@@ -133,22 +114,23 @@
     btn.textContent = isBusy ? "VERIFYING..." : "CONTINUE";
   }
 
-  async function readJsonOrText(resp){
+  async function postRedeem(endpoint, code, email) {
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ code, email })
+    });
+
     const ct = (resp.headers.get("content-type") || "").toLowerCase();
     if (ct.includes("application/json")) {
-      return { kind: "json", data: await resp.json().catch(() => ({})) };
+      const data = await resp.json().catch(() => ({}));
+      return { resp, data, isJson: true };
     }
-    const text = await resp.text().catch(() => "");
-    return { kind: "text", text };
-  }
 
-  function friendlyApiError(respStatus, bodyText){
-    const sample = String(bodyText || "").replace(/\s+/g," ").slice(0, 120);
-    // This is the classic symptom you're seeing.
-    if (sample.toLowerCase().includes("<!doctype html") || sample.toLowerCase().includes("<html")) {
-      return `API routing error: /api returned HTML instead of JSON. Confirm your Worker route covers ${window.location.hostname}/api/* and that you’re testing on https://wenotpoor.com (not a pages.dev URL).`;
-    }
-    return `Could not verify code. (${respStatus})`;
+    // Non-JSON = almost always Pages HTML
+    const text = await resp.text().catch(() => "");
+    return { resp, data: { error: text.slice(0, 240) }, isJson: false };
   }
 
   async function redeem() {
@@ -165,32 +147,25 @@
     setBusy(true);
 
     try {
-      const resp = await fetch(REDEEM_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ code, email })
-      });
+      // 1) Try same-origin
+      let { resp, data, isJson } = await postRedeem(SAME_ORIGIN_REDEEM, code, email);
 
-      const parsed = await readJsonOrText(resp);
+      // 2) If it returns HTML, retry against Worker host
+      if (!isJson) {
+        ({ resp, data, isJson } = await postRedeem(WORKER_REDEEM, code, email));
+        if (!isJson) {
+          setMsg("API routing error: /api returned HTML instead of JSON. Your domain route is not hitting the Worker.");
+          setBusy(false);
+          return;
+        }
+      }
 
       if (!resp.ok) {
-        if (parsed.kind === "json") {
-          setMsg(parsed.data?.error || `Could not verify code. (${resp.status})`);
-        } else {
-          setMsg(friendlyApiError(resp.status, parsed.text));
-        }
+        setMsg(data?.error || `Could not verify code. (${resp.status})`);
         setBusy(false);
         return;
       }
 
-      if (parsed.kind !== "json") {
-        setMsg("API error: expected JSON but received non-JSON response.", true);
-        setBusy(false);
-        return;
-      }
-
-      const data = parsed.data;
       stageAutoPayload({ email, code, data });
       window.location.href = routeAfterRedeem(data, email, code);
 
@@ -208,7 +183,6 @@
       if (qCode) $("code").value = qCode;
       if (qEmail) $("email").value = qEmail;
 
-      // Prefill from storage only (does not save anything)
       if (!qEmail) {
         const carry = (sessionStorage.getItem("wnp_email") || localStorage.getItem("wnp_email") || "").trim();
         if (carry) $("email").value = normalizeEmail(carry);
