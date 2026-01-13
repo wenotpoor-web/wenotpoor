@@ -120,47 +120,139 @@
     }
   </style>
 
-  <script>
-    const checkbox = document.getElementById("oathAgree");
-    const enterBtn = document.getElementById("enterBtn");
-    const msg = document.getElementById("msg");
+ <script>
+  const checkbox = document.getElementById("oathAgree");
+  const enterBtn = document.getElementById("enterBtn");
+  const msg = document.getElementById("msg");
 
-    function showMessage(text){
-      if (!text){
-        msg.style.display = "none";
-        msg.textContent = "";
-        return;
-      }
-      msg.style.display = "block";
-      msg.textContent = text;
+  // ✅ Set these to your real pages
+  const MEMBER_HOME = "/member-area.html"; // or "/member-access.html"
+  const NAME_PAGE = "/name.html";          // if you require first name after oath
+  const DECISION_PAGE = "/decision.html";  // manual path status screen (pending/denied/approved)
+  const LOGIN_PAGE = "/login.html";        // if someone hits this page without a session
+
+  function showMessage(text){
+    if (!text){
+      msg.style.display = "none";
+      msg.textContent = "";
+      return;
+    }
+    msg.style.display = "block";
+    msg.textContent = text;
+  }
+
+  function setEnabled(enabled){
+    if (enabled){
+      enterBtn.classList.remove("btn-disabled");
+      enterBtn.setAttribute("href", "#");
+      enterBtn.setAttribute("aria-disabled", "false");
+      showMessage("");
+    } else {
+      enterBtn.classList.add("btn-disabled");
+      enterBtn.setAttribute("href", "#");
+      enterBtn.setAttribute("aria-disabled", "true");
+    }
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      method: opts.method || "GET",
+      headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+      credentials: "include", // ✅ required for session cookies
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+
+    // Try JSON, but fail gracefully if not
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+    return { res, data, text };
+  }
+
+  function routeFromMe(me){
+    // ✅ If oath already accepted, NEVER show this page again
+    const oathAccepted = !!me?.oath_accepted_at || me?.needs_oath === false;
+
+    if (oathAccepted){
+      // If you require first name after oath, route there until completed
+      if (me?.needs_first_name) return NAME_PAGE;
+      return MEMBER_HOME;
     }
 
-    function setEnabled(enabled){
-      if (enabled){
-        enterBtn.classList.remove("btn-disabled");
-        enterBtn.setAttribute("href", "/pending.html");
-        enterBtn.setAttribute("aria-disabled", "false");
-        showMessage("");
-      } else {
-        enterBtn.classList.add("btn-disabled");
-        enterBtn.setAttribute("href", "#");
-        enterBtn.setAttribute("aria-disabled", "true");
-      }
-    }
+    // Still needs oath → stay here
+    return null;
+  }
 
+  async function boot(){
     setEnabled(false);
 
-    checkbox.addEventListener("change", () => {
-      setEnabled(checkbox.checked);
-    });
+    // Make sure they can't even be here unless session is valid
+    const { res, data } = await api("/api/me");
 
-    enterBtn.addEventListener("click", (e) => {
-      if (enterBtn.classList.contains("btn-disabled")){
-        e.preventDefault();
-        showMessage("You must accept the oath before you can enter.");
+    if (!res.ok){
+      // Not logged in or invalid session
+      window.location.href = LOGIN_PAGE;
+      return;
+    }
+
+    const next = routeFromMe(data);
+    if (next){
+      window.location.replace(next);
+      return;
+    }
+
+    // Needs oath → allow checkbox gating
+    checkbox.addEventListener("change", () => setEnabled(checkbox.checked));
+  }
+
+  enterBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    if (enterBtn.classList.contains("btn-disabled")){
+      showMessage("You must accept the oath before you can enter.");
+      return;
+    }
+
+    try{
+      enterBtn.classList.add("btn-disabled");
+      showMessage("Recording your oath...");
+
+      // ✅ IMPORTANT: this must match your Worker route name
+      // Common options: "/api/oath/accept" or "/api/oath"
+      const { res, data, text } = await api("/api/oath/accept", { method: "POST" });
+
+      if (!res.ok){
+        // If worker returned JSON error message, show it, else fallback
+        showMessage(data?.error || "Oath could not be recorded. Please try again.");
+        enterBtn.classList.remove("btn-disabled");
+        return;
       }
-    });
-  </script>
+
+      // After accept, always re-check /api/me for authoritative routing
+      const me = await api("/api/me");
+      if (me.res.ok){
+        const next = routeFromMe(me.data);
+        if (next){
+          window.location.href = next;
+          return;
+        }
+        // If still not allowed, send to decision (manual path pending/denied)
+        window.location.href = DECISION_PAGE;
+        return;
+      }
+
+      // Fallback if /api/me failed after accept
+      window.location.href = MEMBER_HOME;
+
+    } catch(err){
+      showMessage("Network error. Please try again.");
+      enterBtn.classList.remove("btn-disabled");
+    }
+  });
+
+  boot();
+</script>
 
 </body>
 </html>
