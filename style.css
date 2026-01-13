@@ -198,6 +198,14 @@ input:focus, textarea:focus, select:focus{
 .btn:hover{filter:brightness(.98)}
 .btn:active{transform:translateY(1px)}
 
+/* ✅ Small button variant (used for top-right stacks like member area) */
+.btn.small{
+  padding:10px 14px;
+  font-size:12px;
+  letter-spacing:.08em;
+  border-radius:12px;
+}
+
 /* Ghost button */
 .btn.ghost{
   background:transparent;
@@ -267,6 +275,23 @@ a:hover{color:#fff}
 }
 .top-login span{ text-decoration:underline; }
 .top-login:hover{ color:#fff; }
+
+/* ✅ MEMBER TOP-RIGHT ACTION STACK (Resources / Merchandise / Logout) */
+.member-top-actions{
+  position:fixed;
+  top:16px;
+  right:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index:1100;
+}
+.member-top-actions .btn{
+  text-decoration:none; /* prevent underline from global a{} */
+}
+.member-top-actions .ghost{
+  opacity:.88;
+}
 
 /* =========================
    CHECKPOINT-SPECIFIC HELPERS
@@ -418,5 +443,16 @@ select:-webkit-autofill:focus{
     top:10px;
     right:10px;
     font-size:11px;
+  }
+
+  /* ✅ Keep member top-right stack tucked in on mobile */
+  .member-top-actions{
+    top:10px;
+    right:10px;
+    gap:8px;
+  }
+  .member-top-actions .btn{
+    width:auto;
+    max-width:none;
   }
 }
