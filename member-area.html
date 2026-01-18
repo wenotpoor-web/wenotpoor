@@ -315,7 +315,7 @@
       }
       box.innerHTML = items.slice(0, 6).map(it => {
         const left = `${it.label || it.reason || "Activity"}`;
-        const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${it.when || ""}`;
+        const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${it.local_datetime || it.local_time || it.when || ""}`;
         return `<div class="recent-item">
           <div class="recent-left">${escapeHtml(left)}</div>
           <div class="recent-right">${escapeHtml(right)}</div>
