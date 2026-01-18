@@ -316,7 +316,7 @@
         box.innerHTML = `<div class="muted2">No activity yet.</div>`;
         return;
       }
-      box.innerHTML = items.slice(0, 6).map(it => {
+      box.innerHTML = items.slice(0, 50).map(it => {
         const left = `${it.label || it.reason || "Activity"}`;
         const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${it.local_datetime || it.local_time || it.when || ""}`;
         return `<div class="recent-item">
@@ -385,7 +385,8 @@
 
       // Quote
       el("quoteText").textContent = data.quote?.text || "No quote available.";
-      el("quoteDate").textContent = data.quote?.date || "";
+      el("quoteDate").textContent = datel("quoteDate").textContent = data.quote_display_date || data.quote?.date || "";
+        a.quote?.date || "";
 
       // Check-in button
       if (data.checked_in_today){
