@@ -18,6 +18,7 @@
   </div>
 
   <main class="wrap">
+
     <header class="hero">
       <div class="brand-wrap brand-offset">
         <span class="brand">WE NOT POOR</span>
@@ -25,7 +26,9 @@
       </div>
 
       <h1>MEMBER ACCESS</h1>
-      <p class="sub">You crossed the line. This area is not public.</p>
+      <p class="sub">
+        You crossed the line. This area is not public.
+      </p>
     </header>
 
     <section class="card member-card">
@@ -53,7 +56,6 @@
                 <div id="todayEarned" class="mini-val">—</div>
               </div>
               <div class="mini">
-                <!-- ✅ CHANGED: Lifetime Purchases -->
                 <div class="mini-label">Lifetime Purchases</div>
                 <div id="purchaseEarned" class="mini-val">—</div>
               </div>
@@ -65,7 +67,9 @@
             <div class="kicker">TODAY’S QUOTE</div>
             <div id="quoteDate" class="muted2">—</div>
 
-            <p id="quoteText" class="quote">Loading…</p>
+            <p id="quoteText" class="quote">
+              Loading…
+            </p>
 
             <button id="checkinBtn" class="btn btn-disabled" disabled type="button">I READ IT</button>
             <div id="checkinMsg" class="result err" style="display:none; margin-top:10px;"></div>
@@ -87,6 +91,7 @@
 
       </div>
     </section>
+
   </main>
 
   <style>
@@ -217,12 +222,12 @@
       align-items: flex-end;
     }
     .member-top-actions .btn{
-      text-decoration: none; /* prevent underline from global a{} */
+      text-decoration: none;
       padding: 8px 12px;
       font-size: 11px;
       letter-spacing: .10em;
       border-radius: 12px;
-      min-width: 160px;     /* keeps stack clean */
+      min-width: 160px;
       justify-content: center;
     }
 
@@ -246,13 +251,11 @@
   </style>
 
   <script>
-    // ✅ Real files
-    const LOGIN_PAGE     = "/member-access.html"; // set to /login.html if you have one
+    const LOGIN_FALLBACK = "/member-access.html";
     const DECISION_PAGE  = "/decision.html";
     const OATH_PAGE      = "/oath.html";
     const NAME_PAGE      = "/name.html";
 
-    // ✅ API
     const HOME_API       = "/api/member/home";
     const CHECKIN_API    = "/api/daily-checkin";
 
@@ -304,7 +307,6 @@
         .replaceAll("'","&#039;");
     }
 
-    // ✅ Prefer server-provided label (humanized); fall back safely.
     function renderRecent(items){
       const box = el("recentList");
       if (!items || !items.length){
@@ -312,8 +314,8 @@
         return;
       }
       box.innerHTML = items.slice(0, 6).map(it => {
-        const left = `${it.label || it.note || it.reason || "Activity"}`;
-        const right = `${it.delta > 0 ? "+" : ""}${Number(it.delta || 0)} pts · ${it.when || ""}`;
+        const left = `${it.label || it.reason || "Activity"}`;
+        const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${it.when || ""}`;
         return `<div class="recent-item">
           <div class="recent-left">${escapeHtml(left)}</div>
           <div class="recent-right">${escapeHtml(right)}</div>
@@ -321,43 +323,40 @@
       }).join("");
     }
 
-    // ✅ Hard guard: this page should only ever be reachable when ACTIVE.
-    // Route precisely based on /api/me progress flags.
     async function guard() {
-      const { res, data: me } = await api("/api/me");
+      try {
+        const { res, data: me } = await api("/api/me");
 
-      if (!res.ok || !me || !me.authenticated){
-        window.location.href = LOGIN_PAGE;
+        if (!res.ok || !me){
+          window.location.href = LOGIN_FALLBACK;
+          return false;
+        }
+
+        if (me.status !== "active") {
+          window.location.href = DECISION_PAGE;
+          return false;
+        }
+
+        if (!me.oath_accepted_at && me.needs_oath !== false) {
+          window.location.href = OATH_PAGE;
+          return false;
+        }
+
+        if (!me.first_name && me.needs_first_name !== false) {
+          window.location.href = NAME_PAGE;
+          return false;
+        }
+
+        if (me.first_name) el("welcome").textContent = `Welcome, ${me.first_name}.`;
+        return true;
+
+      } catch (_) {
+        window.location.href = LOGIN_FALLBACK;
         return false;
       }
-
-      // Denied/pending goes to decision screen
-      if (me.status !== "active") {
-        window.location.href = DECISION_PAGE;
-        return false;
-      }
-
-      // If active but oath missing (should be rare), force oath.
-      // Prefer `effective_oath_accepted` if present.
-      const oathOk = (me.effective_oath_accepted === true) || !!me.oath_accepted_at || (me.needs_oath === false);
-      if (!oathOk) {
-        window.location.href = OATH_PAGE;
-        return false;
-      }
-
-      // Require first name if you enforce it
-      const nameOk = !!(me.first_name && String(me.first_name).trim()) || (me.needs_first_name === false);
-      if (!nameOk) {
-        window.location.href = NAME_PAGE;
-        return false;
-      }
-
-      if (me.first_name) el("welcome").textContent = `Welcome, ${me.first_name}.`;
-      return true;
     }
 
     async function loadHome(){
-      // Default UI state
       el("pointsBalance").textContent = "—";
       el("pointsMeta").textContent = "Loading…";
       el("todayEarned").textContent = "—";
@@ -377,14 +376,9 @@
 
       // Points
       el("pointsBalance").textContent = data.points_balance ?? 0;
-      el("pointsMeta").textContent = data.points_hint || "Points are earned through discipline and purchase.";
-      el("todayEarned").textContent = (data.today_points ?? 0);
-
-      // ✅ Lifetime Purchases: show count (and dollars if available)
-      const c = Number(data.purchases_lifetime ?? 0);
-      const cents = Number(data.purchases_lifetime_cents ?? 0);
-      const dollars = (cents / 100).toFixed(2);
-      el("purchaseEarned").textContent = cents ? `${c} ($${dollars})` : `${c}`;
+      el("pointsMeta").textContent = "Points are earned through daily execution and verified progress.";
+      el("todayEarned").textContent = (data.today_points ?? 0);              // ✅ all points earned today
+      el("purchaseEarned").textContent = (data.purchases_lifetime ?? 0);     // ✅ count only
 
       // Quote
       el("quoteText").textContent = data.quote?.text || "No quote available.";
@@ -392,14 +386,13 @@
 
       // Check-in button
       if (data.checked_in_today){
-        checkinBtn.textContent = "CHECKED IN";
+        checkinBtn.textContent = "CHECKED IN ✅";
         setCheckinEnabled(false);
       } else {
         checkinBtn.textContent = "I READ IT";
         setCheckinEnabled(true);
       }
 
-      // Recent activity
       renderRecent(data.recent || []);
     }
 
@@ -409,12 +402,6 @@
 
       const { res, data } = await api(CHECKIN_API, { method: "POST" });
 
-      // If session died, send to login
-      if (res.status === 401){
-        window.location.href = LOGIN_PAGE;
-        return;
-      }
-
       if (!res.ok){
         showMsg(data?.error || "Could not record check-in. Try again.");
         setCheckinEnabled(true);
@@ -422,16 +409,14 @@
       }
 
       showMsg("Checked in. Points awarded.", false);
-      checkinBtn.textContent = "CHECKED IN";
+      checkinBtn.textContent = "CHECKED IN ✅";
       setCheckinEnabled(false);
 
       await loadHome();
     }
 
     async function logout() {
-      try {
-        await fetch("/api/logout", { method: "POST", credentials: "include" });
-      } catch (_) {}
+      try { await fetch("/api/logout", { method: "POST", credentials: "include" }); } catch (_) {}
       window.location.href = "/index.html";
     }
 
