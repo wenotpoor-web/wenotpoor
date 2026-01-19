@@ -316,10 +316,13 @@
         box.innerHTML = `<div class="muted2">No activity yet.</div>`;
         return;
       }
+
+      // Show all returned (Worker filters to last 30 days)
       box.innerHTML = items.map(it => {
         const left = `${it.label || it.reason || "Activity"}`;
         const when = it.local_datetime || it.local_time || it.when || "";
         const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${when}`;
+
         return `<div class="recent-item">
           <div class="recent-left">${escapeHtml(left)}</div>
           <div class="recent-right">${escapeHtml(right)}</div>
