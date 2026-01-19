@@ -50,6 +50,7 @@
           <div class="start-actions">
             <a class="btn" href="/member-area.html">GO TO MEMBER AREA</a>
             <a class="btn ghost" href="#discipline">30-DAY DISCIPLINE</a>
+            <a class="btn ghost" href="#earn">EARN POINTS</a>
           </div>
 
           <div class="muted2 note">
@@ -159,32 +160,29 @@
             </div>
           </section>
 
-          <!-- QUICK LINKS -->
-          <section class="panel" id="quicklinks">
-            <div class="kicker">QUICK LINKS</div>
-            <p class="muted2">Move fast. Stay in execution mode.</p>
+          <!-- ✅ EARN POINTS (replaces QUICK LINKS) -->
+          <section class="panel" id="earn">
+            <div class="kicker">EARN POINTS</div>
+            <p class="muted2">
+              Finish 30 days. Upload proof. Earn <strong>+35 points</strong>.
+            </p>
 
-            <div class="list">
-              <a class="row" href="/member-area.html">
-                <span>Member Area</span>
-                <span class="tag ghost">OPEN</span>
-              </a>
-              <a class="row" href="/oath.html">
-                <span>Oath</span>
-                <span class="tag ghost">OPEN</span>
-              </a>
-              <a class="row" href="/settings.html">
-                <span>Settings</span>
-                <span class="tag ghost">OPEN</span>
-              </a>
-              <a class="row" href="/merchandise.html">
-                <span>Merchandise</span>
-                <span class="tag ghost">OPEN</span>
-              </a>
+            <div class="muted2 hint" style="margin-top:10px;">
+              Upload a photo or PDF of your completed tracker. This submission will be reviewed.
             </div>
 
-            <div class="muted2 hint">
-              If you feel stuck: pick one tool above and finish it today.
+            <div class="upload-box">
+              <label class="fieldlabel" for="disciplineFile">PROOF FILE</label>
+              <input id="disciplineFile" type="file" accept="image/*,.pdf" />
+
+              <div class="muted2" id="fileMeta" style="margin-top:8px;">No file selected.</div>
+
+              <button class="btn" id="submitDisciplineBtn" type="button">SUBMIT 30-DAY PROOF</button>
+              <div id="submitMsg" class="result err" style="display:none; margin-top:10px;"></div>
+
+              <div class="muted2 hint" style="margin-top:10px;">
+                Rule: Don’t upload half-finished work. Finish the 30 days first.
+              </div>
             </div>
           </section>
 
@@ -326,6 +324,35 @@
       opacity: .9;
     }
 
+    /* ✅ Earn Points */
+    .upload-box{
+      margin-top: 12px;
+      border: 1px solid rgba(255,212,0,.12);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.18);
+    }
+    .fieldlabel{
+      display:block;
+      font-size: 12px;
+      letter-spacing: .10em;
+      font-weight: 900;
+      margin-bottom: 8px;
+      opacity: .95;
+    }
+    #disciplineFile{
+      width: 100%;
+      border-radius: 14px;
+      border: 2px solid rgba(255,212,0,.45);
+      padding: 10px 12px;
+      background:#000;
+      color: rgba(255,212,0,.92);
+      outline: none;
+    }
+    #submitDisciplineBtn{
+      margin-top: 12px;
+    }
+
     /* ✅ TOP-RIGHT STACK (match member-area) */
     .member-top-actions{
       position: fixed;
@@ -371,6 +398,9 @@
     const OATH_PAGE      = "/oath.html";
     const NAME_PAGE      = "/name.html";
 
+    // ✅ Use server-provided local day to avoid “tomorrow” issues
+    const HOME_API = "/api/member/home";
+
     const el = (id) => document.getElementById(id);
 
     function fmtMMDDYYYY(ymd){
@@ -378,6 +408,18 @@
       const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (!m) return s || "—";
       return `${m[2]}/${m[3]}/${m[1]}`;
+    }
+
+    function showSubmitMsg(text, isError=true){
+      const box = el("submitMsg");
+      if (!text){
+        box.style.display = "none";
+        box.textContent = "";
+        return;
+      }
+      box.style.display = "block";
+      box.textContent = text;
+      box.className = "result " + (isError ? "err" : "ok");
     }
 
     async function api(path, opts = {}) {
@@ -394,7 +436,7 @@
       return { res, data, text };
     }
 
-    async function guard() {
+    async function guardAndSetToday() {
       const pill = el("memberPill");
       const todayPill = el("todayPill");
 
@@ -406,7 +448,6 @@
           return false;
         }
 
-        // If not active, send them to decision (or oath/name based on flags)
         if (me.status !== "active") {
           window.location.href = DECISION_PAGE;
           return false;
@@ -424,7 +465,11 @@
 
         pill.textContent = "Member: Active";
         if (me.first_name) pill.textContent = `Member: ${me.first_name}`;
-        todayPill.textContent = `Today: ${fmtMMDDYYYY(new Date().toISOString().slice(0,10))}`;
+
+        // ✅ pull “local today” from server (member/home)
+        const home = await api(HOME_API);
+        const localDay = home?.data?.local_day || home?.data?.quote?.date || "";
+        todayPill.textContent = `Today: ${fmtMMDDYYYY(localDay)}`;
 
         return true;
 
@@ -439,10 +484,31 @@
       window.location.href = "/index.html";
     }
 
+    // UI wiring for Earn Points (upload stub; Worker will be added next)
+    const fileInput = el("disciplineFile");
+    const fileMeta = el("fileMeta");
+    const submitBtn = el("submitDisciplineBtn");
+
+    fileInput.addEventListener("change", () => {
+      const f = fileInput.files && fileInput.files[0];
+      fileMeta.textContent = f ? `Selected: ${f.name}` : "No file selected.";
+      showSubmitMsg("");
+    });
+
+    submitBtn.addEventListener("click", () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (!f){
+        showSubmitMsg("Select a proof file first.", true);
+        return;
+      }
+      // Placeholder until Worker endpoint is added
+      showSubmitMsg("Upload endpoint not enabled yet. Next step: add Worker route for 30-day proof submissions.", true);
+    });
+
     el("logoutBtnTop").addEventListener("click", logout);
 
     (async () => {
-      await guard();
+      await guardAndSetToday();
     })();
   </script>
 </body>
