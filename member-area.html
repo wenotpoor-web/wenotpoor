@@ -82,9 +82,9 @@
           <!-- Recent activity -->
           <div class="panel" style="grid-column:1 / -1;">
             <div class="kicker">RECENT ACTIVITY (LAST 30 DAYS)</div>
-<div class="muted2" id="habitNote" style="margin-top:6px;">
-  Consistency for 30 days builds a habit. Show up daily.
-</div>
+            <div class="muted2" id="habitNote" style="margin-top:6px;">
+              Consistency for 30 days builds a habit. Show up daily.
+            </div>
             <div id="recentList" class="recent">
               <div class="muted2">Loading…</div>
             </div>
@@ -316,9 +316,11 @@
         box.innerHTML = `<div class="muted2">No activity yet.</div>`;
         return;
       }
-      box.innerHTML = items.slice(0, 50).map(it => {
+      // Show all returned (Worker already filters to last 30 days)
+      box.innerHTML = items.map(it => {
         const left = `${it.label || it.reason || "Activity"}`;
-        const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${it.local_datetime || it.local_time || it.when || ""}`;
+        const when = it.local_datetime || it.local_time || it.when || "";
+        const right = `${it.delta > 0 ? "+" : ""}${it.delta} pts · ${when}`;
         return `<div class="recent-item">
           <div class="recent-left">${escapeHtml(left)}</div>
           <div class="recent-right">${escapeHtml(right)}</div>
@@ -380,13 +382,12 @@
       // Points
       el("pointsBalance").textContent = data.points_balance ?? 0;
       el("pointsMeta").textContent = "Points are earned through daily execution and verified progress.";
-      el("todayEarned").textContent = (data.today_points ?? 0);              // ✅ all points earned today
-      el("purchaseEarned").textContent = (data.purchases_lifetime ?? 0);     // ✅ count only
+      el("todayEarned").textContent = (data.today_points ?? 0);
+      el("purchaseEarned").textContent = (data.purchases_lifetime ?? 0);
 
       // Quote
       el("quoteText").textContent = data.quote?.text || "No quote available.";
-      el("quoteDate").textContent = data.quote_display_date || data.quote?.date || "—";
-        a.quote?.date || "";
+      el("quoteDate").textContent = data.quote_display_date || data.quote?.date || "—"; // ✅ FIXED (no stray variables)
 
       // Check-in button
       if (data.checked_in_today){
