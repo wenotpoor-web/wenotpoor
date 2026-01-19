@@ -316,7 +316,6 @@
         box.innerHTML = `<div class="muted2">No activity yet.</div>`;
         return;
       }
-      // Show all returned (Worker already filters to last 30 days)
       box.innerHTML = items.map(it => {
         const left = `${it.label || it.reason || "Activity"}`;
         const when = it.local_datetime || it.local_time || it.when || "";
@@ -361,14 +360,13 @@
       }
     }
 
+    function fmtMMDDYYYY(ymd){
+      const s = String(ymd || "").trim();
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return s || "—";
+      return `${m[2]}/${m[3]}/${m[1]}`; // MM/DD/YYYY
+    }
 
-function fmtMMDDYYYY(ymd){
-  const s = String(ymd || "").trim();
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return s || "—";
-  return `${m[2]}/${m[3]}/${m[1]}`; // MM/DD/YYYY
-}
-    
     async function loadHome(){
       el("pointsBalance").textContent = "—";
       el("pointsMeta").textContent = "Loading…";
