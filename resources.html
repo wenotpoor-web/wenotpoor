@@ -384,6 +384,33 @@
 
     const el = (id) => document.getElementById(id);
 
+    function fmtMMDDYYYY(ymd){
+      const s = String(ymd || "").trim();
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return s || "—";
+      return `${m[2]}/${m[3]}/${m[1]}`;
+    }
+
+    // ✅ FIX: always compute "Today" in America/New_York (prevents “tomorrow” and prevents blank)
+    function todayNY_MMDDYYYY(){
+      try{
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/New_York",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).formatToParts(new Date());
+
+        const obj = {};
+        for (const p of parts) obj[p.type] = p.value;
+        return `${obj.month}/${obj.day}/${obj.year}`; // MM/DD/YYYY
+      } catch {
+        // fallback (still better than blank)
+        const iso = new Date().toISOString().slice(0,10);
+        return fmtMMDDYYYY(iso);
+      }
+    }
+
     function showEarn(msg, isErr=false){
       const box = el("earnMsg");
       box.style.display = "block";
@@ -409,6 +436,9 @@
     async function guard() {
       const pill = el("memberPill");
       const todayPill = el("todayPill");
+
+      // ✅ Set date immediately so it never shows blank
+      todayPill.textContent = `Today: ${todayNY_MMDDYYYY()}`;
 
       try {
         const { res, data: me } = await api("/api/me");
@@ -436,8 +466,8 @@
         pill.textContent = "Member: Active";
         if (me.first_name) pill.textContent = `Member: ${me.first_name}`;
 
-        // ✅ Use server-provided local date (prevents “tomorrow” from UTC)
-        todayPill.textContent = `Today: ${me.today_display || me.today_ymd || "—"}`;
+        // Optional: if Worker later provides today_display, use it (but never blank)
+        if (me.today_display) todayPill.textContent = `Today: ${me.today_display}`;
 
         return true;
       } catch (_) {
