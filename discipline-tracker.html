@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>30-Day Discipline Tracker · WE NOT POOR</title>
+  <link rel="stylesheet" href="/style.css?v=wnp-tracker1" />
+</head>
+
+<body class="wnp">
+
+  <!-- TOP-RIGHT STACK -->
+  <div class="member-top-actions">
+    <a class="btn small" href="/resources.html">RESOURCES</a>
+    <a class="btn small" href="/merchandise.html">MERCHANDISE</a>
+    <a class="btn small ghost" href="/settings.html">SETTINGS</a>
+    <button class="btn small ghost" id="logoutBtnTop" type="button">LOG OUT</button>
+  </div>
+
+  <main class="wrap">
+
+    <header class="hero">
+      <div class="brand-wrap brand-offset">
+        <span class="brand">WE NOT POOR</span>
+        <span class="brand-accent" aria-hidden="true"></span>
+      </div>
+      <h1>30-Day Tracker</h1>
+      <p class="sub">
+        One day per day. Miss a day = restart at Day 1. No catch-up.
+      </p>
+    </header>
+
+    <!-- STATUS CARD -->
+    <section class="card" id="statusCard">
+      <div class="field" style="margin-top:0;">
+        <span>Status</span>
+        <div class="muted" id="statusLine">Loading…</div>
+      </div>
+
+      <div class="field">
+        <span>Today</span>
+        <div class="muted" id="todayLine">Loading…</div>
+      </div>
+
+      <div class="field">
+        <span>Current Day</span>
+        <div class="muted" id="dayLine">Loading…</div>
+      </div>
+
+      <div class="result" id="statusMsg" style="display:none;"></div>
+
+      <div class="actions">
+        <a class="btn ghost" href="/resources.html">BACK TO RESOURCES</a>
+      </div>
+    </section>
+
+    <!-- DAILY WORK CARD -->
+    <section class="card" id="workCard" style="display:none;">
+      <div class="field" style="margin-top:0;">
+        <span id="workTitle">Day</span>
+        <div class="muted" id="workPrompt">—</div>
+      </div>
+
+      <!-- MCQ (conditional) -->
+      <div class="field" id="mcqBlock" style="display:none;">
+        <span>Choose One <span class="req">*</span></span>
+        <select id="mcqSelect">
+          <option value="">Select…</option>
+        </select>
+        <div class="muted" id="mcqHint" style="margin-top:-6px;">
+          Some days require the correct answer to earn credit.
+        </div>
+      </div>
+
+      <!-- Required typing -->
+      <div class="field">
+        <span>Your Answer <span class="req">*</span></span>
+        <textarea id="textResponse" placeholder="Type your response. No blanks. No shortcuts."></textarea>
+        <div class="muted" id="textHint">
+          Minimum: <b>60 characters</b>. This forces you to think, not click.
+        </div>
+      </div>
+
+      <!-- Explain more (conditional) -->
+      <div class="field" id="explainBlock" style="display:none;">
+        <span>Explain More <span class="req">*</span></span>
+        <textarea id="explainMore" placeholder="Explain in your own words."></textarea>
+        <div class="muted" id="explainHint">
+          Minimum: <b>40 characters</b>.
+        </div>
+      </div>
+
+      <div class="result" id="submitMsg" style="display:none;"></div>
+
+      <div class="actions actions-stack">
+        <button class="btn btn-danger" id="submitBtn" type="button">SUBMIT TODAY</button>
+        <a class="save-later" href="/resources.html">Save for later</a>
+      </div>
+    </section>
+
+    <!-- COMPLETION CARD -->
+    <section class="card" id="completeCard" style="display:none;">
+      <div class="field" style="margin-top:0;">
+        <span>Completed</span>
+        <div class="muted">
+          You finished Day 30. Generate your Completion Certificate and upload it on Resources to claim <b>+35 points</b>.
+        </div>
+      </div>
+
+      <div class="result" id="certMsg" style="display:none;"></div>
+
+      <div class="actions actions-stack">
+        <button class="btn" id="issueCertBtn" type="button">GENERATE CERTIFICATE</button>
+        <a class="btn ghost" href="/resources.html">GO UPLOAD CERTIFICATE</a>
+      </div>
+    </section>
+
+    <footer class="foot foot-center">
+      <span>WE NOT POOR · DISCIPLINE TRACKER</span>
+    </footer>
+
+  </main>
+
+<script>
+/* =========================
+   CONFIG
+   ========================= */
+const MIN_TEXT = 60;
+const MIN_EXPLAIN = 40;
+
+// If your Worker returns day content, this is unused.
+// If /api/discipline-tracker/day is not yet deployed, we fall back to placeholders:
+const FALLBACK_DAYS = {
+  1: { type:"text_only", prompt:"Day 1: Write the truth. What are you tolerating that is keeping you broke—habits, people, excuses? Name it." },
+  2: { type:"mcq_plus_text", prompt:"Day 2: Choose the definition. What is discipline?", choices:[
+      { v:"A", label:"Doing what feels good when it feels good." , correct:false},
+      { v:"B", label:"Doing what must be done, regardless of mood." , correct:true},
+      { v:"C", label:"Waiting until motivation arrives." , correct:false},
+    ], requires_explain:true },
+  3: { type:"text_only", prompt:"Day 3: What is your ONE non-negotiable today? State it like a command." },
+  4: { type:"mcq_plus_text", prompt:"Day 4: Select the correct statement.", choices:[
+      { v:"A", label:"Time is unlimited; you can always restart later.", correct:false},
+      { v:"B", label:"Time is either a weapon or a drug.", correct:true},
+      { v:"C", label:"Time is irrelevant if you stay positive.", correct:false},
+    ], requires_explain:true },
+  // Days 5–30 should come from your server prompts later.
+};
+
+/* =========================
+   HELPERS
+   ========================= */
+function $(id){ return document.getElementById(id); }
+
+function setMsg(el, text, isErr=false){
+  el.style.display = "block";
+  el.className = "result" + (isErr ? " err" : "");
+  el.textContent = text;
+}
+
+function hideMsg(el){ el.style.display = "none"; el.textContent=""; }
+
+function localYMD_TZ(tz){
+  // Return YYYY-MM-DD in a specific TZ using Intl
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz, year:"numeric", month:"2-digit", day:"2-digit"
+  }).formatToParts(new Date());
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${d}`;
+}
+
+async function api(path, opts={}){
+  const res = await fetch(path, {
+    method: opts.method || "GET",
+    headers: Object.assign({ "Content-Type":"application/json" }, opts.headers||{}),
+    credentials: "include",
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+
+  // try json
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch(e){ /* ignore */ }
+
+  return { ok: res.ok, status: res.status, data, raw: text };
+}
+
+/* =========================
+   AUTH GUARD
+   ========================= */
+async function guard(){
+  const me = await api("/api/me");
+  if(!me.ok){
+    window.location.href = "/login.html";
+    return null;
+  }
+
+  // Optional: enforce next_step routing if your /api/me provides it
+  if(me.data && me.data.next_step){
+    const ns = me.data.next_step;
+    if(ns === "needs_oath"){ window.location.href = "/oath.html"; return null; }
+    if(ns === "needs_first_name"){ window.location.href = "/name.html"; return null; }
+    if(ns === "pending" || ns === "denied"){ window.location.href = "/decision.html"; return null; }
+  }
+
+  return me.data || {};
+}
+
+/* =========================
+   RENDER
+   ========================= */
+function renderStatus(status){
+  const tz = "America/New_York";
+  const today = localYMD_TZ(tz);
+  $("todayLine").textContent = `${today} (America/New_York)`;
+
+  const currentDay = status.current_day ?? 1;
+  const last = status.last_completed_ymd ? `Last completed: ${status.last_completed_ymd}` : "No days completed yet.";
+  const canSubmit = status.can_submit_today === false ? "Completed today (locked)." : "Ready to submit today.";
+
+  $("statusLine").textContent = `${last} · ${canSubmit}`;
+  $("dayLine").textContent = `Day ${currentDay} of 30`;
+
+  // Decide which card to show
+  if(status.status === "completed" || status.completed === true){
+    $("workCard").style.display = "none";
+    $("completeCard").style.display = "block";
+  } else {
+    $("completeCard").style.display = "none";
+    $("workCard").style.display = "block";
+  }
+}
+
+function renderDay(dayNumber, payload){
+  $("workTitle").textContent = `Day ${dayNumber} of 30`;
+  $("workPrompt").textContent = payload.prompt || "—";
+
+  // Reset UI
+  hideMsg($("submitMsg"));
+  $("textResponse").value = "";
+  $("explainMore").value = "";
+  $("mcqSelect").innerHTML = `<option value="">Select…</option>`;
+  $("mcqBlock").style.display = "none";
+  $("explainBlock").style.display = "none";
+
+  if(payload.type === "mcq_plus_text" && Array.isArray(payload.choices)){
+    $("mcqBlock").style.display = "flex";
+    for(const c of payload.choices){
+      const opt = document.createElement("option");
+      opt.value = c.value || c.v || "";
+      opt.textContent = c.label || c.text || "";
+      $("mcqSelect").appendChild(opt);
+    }
+    // Explain more forced on MCQ days
+    $("explainBlock").style.display = "flex";
+  }
+}
+
+function validateForm(dayPayload){
+  const text = ($("textResponse").value || "").trim();
+  if(text.length < MIN_TEXT){
+    return `Your Answer must be at least ${MIN_TEXT} characters.`;
+  }
+
+  if(dayPayload.type === "mcq_plus_text"){
+    const choice = ($("mcqSelect").value || "").trim();
+    if(!choice) return "You must select an option.";
+    const explain = ($("explainMore").value || "").trim();
+    if(explain.length < MIN_EXPLAIN){
+      return `Explain More must be at least ${MIN_EXPLAIN} characters.`;
+    }
+  }
+  return null;
+}
+
+/* =========================
+   LOAD FLOW
+   ========================= */
+let CURRENT_STATUS = null;
+let CURRENT_DAY_PAYLOAD = null;
+
+async function loadTracker(){
+  hideMsg($("statusMsg"));
+
+  // status
+  const st = await api("/api/discipline-tracker/status");
+  if(!st.ok){
+    // If endpoint not ready, show guidance
+    setMsg($("statusMsg"),
+      "Tracker endpoints not found yet. Deploy: GET /api/discipline-tracker/status and GET /api/discipline-tracker/day. This page is ready to wire in.",
+      true
+    );
+    // Fallback minimal display (day 1)
+    CURRENT_STATUS = { current_day: 1, can_submit_today: true, status: "active" };
+    renderStatus(CURRENT_STATUS);
+    CURRENT_DAY_PAYLOAD = FALLBACK_DAYS[1] || { type:"text_only", prompt:"Day 1 prompt placeholder." };
+    renderDay(1, normalizeFallbackPayload(CURRENT_DAY_PAYLOAD));
+    return;
+  }
+
+  CURRENT_STATUS = st.data || {};
+  renderStatus(CURRENT_STATUS);
+
+  // If completed, stop.
+  if(CURRENT_STATUS.status === "completed" || CURRENT_STATUS.completed === true){
+    return;
+  }
+
+  // Load day content
+  const dayRes = await api("/api/discipline-tracker/day");
+  if(dayRes.ok && dayRes.data){
+    CURRENT_DAY_PAYLOAD = dayRes.data;
+    // expect dayRes.data.day_number
+    const dayNum = dayRes.data.day_number || CURRENT_STATUS.current_day || 1;
+    renderDay(dayNum, dayRes.data);
+  } else {
+    // fallback prompts if day endpoint missing
+    const dayNum = CURRENT_STATUS.current_day || 1;
+    const fb = FALLBACK_DAYS[dayNum] || { type:"text_only", prompt:`Day ${dayNum} prompt placeholder.` };
+    CURRENT_DAY_PAYLOAD = normalizeFallbackPayload(fb);
+    renderDay(dayNum, CURRENT_DAY_PAYLOAD);
+    setMsg($("statusMsg"),
+      "GET /api/discipline-tracker/day not found yet. Using placeholder prompts for now.",
+      true
+    );
+  }
+}
+
+function normalizeFallbackPayload(fb){
+  if(fb.type !== "mcq_plus_text") return { day_number:null, type:"text_only", prompt: fb.prompt || "" };
+  return {
+    day_number:null,
+    type:"mcq_plus_text",
+    prompt: fb.prompt || "",
+    choices: (fb.choices||[]).map(c => ({ value: c.v, label: c.label, correct: !!c.correct })),
+    requires_explain_more: true
+  };
+}
+
+/* =========================
+   EVENTS
+   ========================= */
+$("submitBtn").addEventListener("click", async () => {
+  hideMsg($("submitMsg"));
+  const payload = CURRENT_DAY_PAYLOAD || { type:"text_only" };
+  const err = validateForm(payload);
+  if(err){
+    setMsg($("submitMsg"), err, true);
+    return;
+  }
+
+  // block if already completed today (client hint; server must enforce)
+  if(CURRENT_STATUS && CURRENT_STATUS.can_submit_today === false){
+    setMsg($("submitMsg"), "Already completed today. Come back tomorrow.", true);
+    return;
+  }
+
+  const body = {
+    text_response: ($("textResponse").value || "").trim()
+  };
+
+  if(payload.type === "mcq_plus_text"){
+    body.mcq_choice = ($("mcqSelect").value || "").trim();
+    body.explain_more = ($("explainMore").value || "").trim();
+  }
+
+  const res = await api("/api/discipline-tracker/submit", { method:"POST", body });
+  if(!res.ok){
+    const msg = (res.data && (res.data.error || res.data.message)) || `Submit failed (HTTP ${res.status}).`;
+    setMsg($("submitMsg"), msg, true);
+    return;
+  }
+
+  // Expect server to return:
+  // { reset:boolean, completed:boolean, current_day:number, status, message }
+  const reset = !!(res.data && res.data.reset);
+  const completed = !!(res.data && res.data.completed);
+  const message = (res.data && res.data.message) || (reset ? "Missed a day. Reset to Day 1." : "Saved. Come back tomorrow.");
+
+  setMsg($("submitMsg"), message, reset);
+
+  // Refresh
+  await loadTracker();
+
+  if(completed){
+    $("workCard").style.display = "none";
+    $("completeCard").style.display = "block";
+  }
+});
+
+$("issueCertBtn").addEventListener("click", async () => {
+  hideMsg($("certMsg"));
+
+  const res = await api("/api/discipline-tracker/certificate/issue", { method:"POST", body:{} });
+  if(!res.ok){
+    const msg = (res.data && (res.data.error || res.data.message)) || `Certificate issue failed (HTTP ${res.status}).`;
+    setMsg($("certMsg"), msg, true);
+    return;
+  }
+
+  const certId = res.data && (res.data.certificate_id || res.data.id);
+  const certUrl = res.data && (res.data.certificate_url || (certId ? `/discipline-certificate.html?id=${encodeURIComponent(certId)}` : null));
+
+  if(certUrl){
+    setMsg($("certMsg"), "Certificate ready. Opening…", false);
+    window.location.href = certUrl;
+  } else {
+    setMsg($("certMsg"), "Certificate issued, but no URL returned by server.", false);
+  }
+});
+
+$("logoutBtnTop").addEventListener("click", async () => {
+  try { await api("/api/logout", { method:"POST", body:{} }); } catch(e){}
+  window.location.href = "/login.html";
+});
+
+/* =========================
+   INIT
+   ========================= */
+(async () => {
+  await guard();
+  await loadTracker();
+})();
+</script>
+
+</body>
+</html>
